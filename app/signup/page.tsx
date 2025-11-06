@@ -141,9 +141,9 @@ export default function SignUpPage() {
   const router = useRouter();
   const { setIsLoggedIn } = useAuth();
 
+  const [teamName, setTeamName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [passwordConfirm, setPasswordConfirm] = useState("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -151,17 +151,32 @@ export default function SignUpPage() {
     setIsLoading(true);
 
     try {
-      if (password != passwordConfirm) throw new Error("Passwords do not match!");
-
       // call our backend to add the user
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/Users/signup`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          teamName: teamName || null
+        })
+      });
 
-      // if (error) throw new Error(error.message);
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText || "Failed to sign up");
+      }
 
-      //  redirect user to dashboard page
-      setIsLoggedIn(true);
-      router.push("/dashboard");
+      const data = await res.json();
+      alert(data.message);
+
+      //  redirect user to sign in
+      router.push("/signin");
     } catch (err) {
       alert(err);
+      setTeamName("");
       setEmail("");
       setPassword("");
       setIsLoading(false);
@@ -179,6 +194,13 @@ export default function SignUpPage() {
 
           <LoginForm onSubmit={handleSignUp}>
             <TextInput
+              label="Team Name"
+              name="teamName"
+              value={teamName}
+              onChange={(e) => setTeamName(e.target.value)}
+              placeholder="Enter your team name"
+            />
+            <TextInput
               label="Email"
               name="email"
               value={email}
@@ -192,15 +214,6 @@ export default function SignUpPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter your password"
-              type="password"
-              required
-            />
-            <TextInput
-              label="Confirm Password"
-              name="passwordConfirm"
-              value={passwordConfirm}
-              onChange={(e) => setPasswordConfirm(e.target.value)}
-              placeholder="Confirm your password"
               type="password"
               required
             />

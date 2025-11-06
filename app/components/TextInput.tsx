@@ -3,13 +3,13 @@ import { ChangeEvent } from "react";
 import { headerFont } from "../localFont";
 
 interface ITextInputProps {
-    label: string;
-    name: string;
-    value: string;
-    placeholder?: string;
-    type?: string;
-    onChange: (e: ChangeEvent<HTMLInputElement>) => void;
-    required?: boolean;
+  label: string;
+  name: string;
+  value: string;
+  placeholder?: string;
+  type?: string;
+  onChange: (e: ChangeEvent<HTMLInputElement>) => void;
+  required?: boolean;
 }
 
 const InputWrapper = styled.div`
@@ -27,6 +27,7 @@ const Label = styled.label`
   color: white;
   font-weight: bold;
   margin-bottom: 0.5rem;
+  transition: 0.2s ease;
 `;
 
 const Input = styled.input`
@@ -64,26 +65,26 @@ const Input = styled.input`
 `;
 
 export default function TextInput({
-    label,
-    name,
-    value,
-    placeholder,
-    type = "text",
-    onChange,
-    required = false
+  label,
+  name,
+  value,
+  placeholder,
+  type = "text",
+  onChange,
+  required = false
 }: ITextInputProps) {
-    return (
-        <InputWrapper>
-            <Label className={headerFont.className} htmlFor={name}>{label}</Label>
-            <Input
-                id={name}
-                name={name}
-                type={type}
-                value={value}
-                placeholder={placeholder}
-                onChange={onChange}
-                required={required}
-            />
-        </InputWrapper>
-    );
+  return (
+    <InputWrapper>
+      <Label className={headerFont.className} htmlFor={name}>{!required ? label : `${label} *`}</Label>
+      <Input
+        id={name}
+        name={name}
+        type={type}
+        value={value}
+        placeholder={placeholder}
+        onChange={onChange}
+        required={required}
+      />
+    </InputWrapper>
+  );
 }
