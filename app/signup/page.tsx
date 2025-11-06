@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "../context/AuthProvider";
 import { PrimaryColorButton, PrimaryColorOutlinedButton } from "../components/Buttons";
 import styled from "styled-components";
@@ -10,6 +9,7 @@ import { titleFont, headerFont } from "../localFont";
 import TextInput from "../components/TextInput";
 import Image from "next/image";
 import TitleLogo from "../components/TitleLogo";
+import { useRedirectIfLoggedIn } from "../hooks/useRedirectIfLoggedIn";
 
 const Container = styled.div`
   display: grid;
@@ -135,116 +135,116 @@ const FormFooterContainer = styled.div`
   gap: 1rem;
 `;
 export default function SignUpPage() {
-    // create browser client
-    const supabase = createClient();
-    const router = useRouter();
-    const { setIsLoggedIn } = useAuth();
+  // redirect to dashboard if logged in
+  useRedirectIfLoggedIn();
+  // create browser client
+  const router = useRouter();
+  const { setIsLoggedIn } = useAuth();
 
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [passwordConfirm, setPasswordConfirm] = useState("");
-    const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [passwordConfirm, setPasswordConfirm] = useState("");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
-    const handleSignUp = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsLoading(true);
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
 
-        try {
-            if (password != passwordConfirm) throw new Error("Passwords do not match!");
+    try {
+      if (password != passwordConfirm) throw new Error("Passwords do not match!");
 
-            // call our backend to add the user
+      // call our backend to add the user
 
-            // if (error) throw new Error(error.message);
+      // if (error) throw new Error(error.message);
 
-            //  redirect user to dashboard page
-            setIsLoggedIn(true);
-            router.push("/dashboard");
-        } catch (err) {
-            const error = err as Error;
-            alert(err);
-            setEmail("");
-            setPassword("");
-            setIsLoading(false);
-        }
-    };
+      //  redirect user to dashboard page
+      setIsLoggedIn(true);
+      router.push("/dashboard");
+    } catch (err) {
+      alert(err);
+      setEmail("");
+      setPassword("");
+      setIsLoading(false);
+    }
+  };
 
-    return (
-        <Container>
-            {/* LEFT PANEL */}
-            <LeftPanel>
-                <LeftPanelContent>
+  return (
+    <Container>
+      {/* LEFT PANEL */}
+      <LeftPanel>
+        <LeftPanelContent>
 
-                    <FormTitle className={titleFont.className}>Effortlessly manage your fantasy football team</FormTitle>
-                    <FormSubtitle className={headerFont.className}>Sign up now completely free</FormSubtitle>
+          <FormTitle className={titleFont.className}>Effortlessly manage your fantasy football team</FormTitle>
+          <FormSubtitle className={headerFont.className}>Sign up now completely free</FormSubtitle>
 
-                    <LoginForm onSubmit={handleSignUp}>
-                        <TextInput
-                            label="Email"
-                            name="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            placeholder="Enter your email"
-                            required
-                        />
-                        <TextInput
-                            label="Password"
-                            name="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            placeholder="Enter your password"
-                            type="password"
-                            required
-                        />
-                        <TextInput
-                            label="Confirm Password"
-                            name="passwordConfirm"
-                            value={passwordConfirm}
-                            onChange={(e) => setPasswordConfirm(e.target.value)}
-                            placeholder="Confirm your password"
-                            type="password"
-                            required
-                        />
-                        <PrimaryColorButton
-                            type="submit"
-                            disabled={isLoading}
-                            isFullWidth
-                            style={{ marginTop: "1rem" }}
-                        >
-                            Sign Up
-                        </PrimaryColorButton>
-                    </LoginForm>
+          <LoginForm onSubmit={handleSignUp}>
+            <TextInput
+              label="Email"
+              name="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email"
+              required
+            />
+            <TextInput
+              label="Password"
+              name="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter your password"
+              type="password"
+              required
+            />
+            <TextInput
+              label="Confirm Password"
+              name="passwordConfirm"
+              value={passwordConfirm}
+              onChange={(e) => setPasswordConfirm(e.target.value)}
+              placeholder="Confirm your password"
+              type="password"
+              required
+            />
+            <PrimaryColorButton
+              type="submit"
+              disabled={isLoading}
+              isFullWidth
+              style={{ marginTop: "1rem" }}
+            >
+              Sign Up
+            </PrimaryColorButton>
+          </LoginForm>
 
-                    {/* FOOTER */}
-                    <FormFooterContainer>
-                        <DividerContainer>
-                            <Divider />
-                            <p className={headerFont.className}>Other</p>
-                            <Divider />
-                        </DividerContainer>
+          {/* FOOTER */}
+          <FormFooterContainer>
+            <DividerContainer>
+              <Divider />
+              <p className={headerFont.className}>Other</p>
+              <Divider />
+            </DividerContainer>
 
-                        <OtherContent>
-                            <p>Already have an account?</p>
-                            <PrimaryColorOutlinedButton onClick={() => router.push("/signin")} isFullWidth>
-                                Sign In
-                            </PrimaryColorOutlinedButton>
-                            <a href="/user/password/forgot">Forgot password?</a>
-                        </OtherContent>
-                    </FormFooterContainer>
-                </LeftPanelContent>
-            </LeftPanel>
+            <OtherContent>
+              <p>Already have an account?</p>
+              <PrimaryColorOutlinedButton onClick={() => router.push("/signin")} isFullWidth>
+                Sign In
+              </PrimaryColorOutlinedButton>
+              <a href="/user/password/forgot">Forgot password?</a>
+            </OtherContent>
+          </FormFooterContainer>
+        </LeftPanelContent>
+      </LeftPanel>
 
-            {/* RIGHT PANEL */}
-            <RightPanel>
-                <BackgroundImage
-                    src="/images/sign-in-sign-up-bg.jpg"
-                    alt="Login Signup Graphic"
-                    fill
-                    priority
-                />
-                <TitleLogoWrapper>
-                    <TitleLogo />
-                </TitleLogoWrapper>
-            </RightPanel>
-        </Container>
-    );
+      {/* RIGHT PANEL */}
+      <RightPanel>
+        <BackgroundImage
+          src="/images/sign-in-sign-up-bg.jpg"
+          alt="Login Signup Graphic"
+          fill
+          priority
+        />
+        <TitleLogoWrapper>
+          <TitleLogo />
+        </TitleLogoWrapper>
+      </RightPanel>
+    </Container>
+  );
 }

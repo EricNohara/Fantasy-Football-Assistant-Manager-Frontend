@@ -2,7 +2,7 @@ import { ReactNode, ButtonHTMLAttributes } from "react"
 import { headerFont } from "../localFont"
 import styled from "styled-components"
 
-const ButtonBase = styled.button<{ isFullWidth?: boolean }>`
+const ButtonBase = styled.button<{ $isFullWidth?: boolean }>`
   padding: 0.5rem 1.5rem;
   font-size: 0.9rem;
   font-weight: bold;
@@ -10,7 +10,7 @@ const ButtonBase = styled.button<{ isFullWidth?: boolean }>`
   border-radius: var(--global-border-radius);
   color: white;
   transition: 0.2s ease;
-  width: ${({ isFullWidth }) => (isFullWidth ? "100%" : "auto")};
+  width: ${({ $isFullWidth }) => ($isFullWidth ? "100%" : "auto")};
 `;
 
 const PrimaryButton = styled(ButtonBase)`
@@ -48,25 +48,37 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   isFullWidth?: boolean;
 }
 
-export function PrimaryColorButton({ children, ...props }: ButtonProps) {
+export function PrimaryColorButton({ children, isFullWidth, ...props }: ButtonProps) {
   return (
-    <PrimaryButton className={headerFont.className} {...props}>
+    <PrimaryButton
+      className={headerFont.className}
+      $isFullWidth={isFullWidth}
+      {...props}
+    >
       {children}
     </PrimaryButton>
   );
 }
 
-export function PrimaryColorOutlinedButton({ children, ...props }: ButtonProps) {
+export function PrimaryColorOutlinedButton({ children, isFullWidth, ...props }: ButtonProps) {
   return (
-    <PrimaryOutlinedButton className={headerFont.className} {...props}>
+    <PrimaryOutlinedButton
+      className={headerFont.className}
+      $isFullWidth={isFullWidth}
+      {...props}
+    >
       {children}
     </PrimaryOutlinedButton>
   );
 }
 
-export function SecondaryColorButton({ children, ...props }: ButtonProps) {
+export function SecondaryColorButton({ children, isFullWidth, ...props }: ButtonProps) {
   return (
-    <SecondaryButton className={headerFont.className} {...props}>
+    <SecondaryButton
+      className={headerFont.className}
+      $isFullWidth={isFullWidth}
+      {...props}
+    >
       {children}
     </SecondaryButton>
   );

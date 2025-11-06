@@ -10,6 +10,7 @@ import { titleFont, headerFont } from "../localFont";
 import TextInput from "../components/TextInput";
 import Image from "next/image";
 import TitleLogo from "../components/TitleLogo";
+import { useRedirectIfLoggedIn } from "../hooks/useRedirectIfLoggedIn";
 
 const Container = styled.div`
   display: grid;
@@ -135,109 +136,110 @@ const FormFooterContainer = styled.div`
   gap: 1rem;
 `;
 export default function SignInPage() {
-    // create browser client
-    const supabase = createClient();
-    const router = useRouter();
-    const { setIsLoggedIn } = useAuth();
+  // redirect to dashboard if logged in
+  useRedirectIfLoggedIn();
+  // create browser client
+  const supabase = createClient();
+  const router = useRouter();
+  const { setIsLoggedIn } = useAuth();
 
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
-    const handleSignIn = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsLoading(true);
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
 
-        try {
-            const { data, error } = await supabase.auth.signInWithPassword({
-                email,
-                password,
-            });
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-            if (error) throw new Error(error.message);
+      if (error) throw new Error(error.message);
 
-            if (data.session) {
-                //  redirect user to dashboard page
-                setIsLoggedIn(true);
-                router.push("/dashboard");
-            }
-        } catch (err) {
-            const error = err as Error;
-            alert(err);
-            setEmail("");
-            setPassword("");
-            setIsLoading(false);
-        }
-    };
+      if (data.session) {
+        //  redirect user to dashboard page
+        setIsLoggedIn(true);
+        router.push("/dashboard");
+      }
+    } catch (err) {
+      alert(err);
+      setEmail("");
+      setPassword("");
+      setIsLoading(false);
+    }
+  };
 
-    return (
-        <Container>
-            {/* LEFT PANEL */}
-            <LeftPanel>
-                <LeftPanelContent>
+  return (
+    <Container>
+      {/* LEFT PANEL */}
+      <LeftPanel>
+        <LeftPanelContent>
 
-                    <FormTitle className={titleFont.className}>Welcome back to your fantasy football assistant</FormTitle>
-                    <FormSubtitle className={headerFont.className}>Sign in now to optimize your roster</FormSubtitle>
+          <FormTitle className={titleFont.className}>Welcome back to your fantasy football assistant</FormTitle>
+          <FormSubtitle className={headerFont.className}>Sign in now to optimize your roster</FormSubtitle>
 
-                    <LoginForm onSubmit={handleSignIn}>
-                        <TextInput
-                            label="Email"
-                            name="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            placeholder="Enter your email"
-                            required
-                        />
-                        <TextInput
-                            label="Password"
-                            name="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            placeholder="Enter your password"
-                            type="password"
-                            required
-                        />
-                        <PrimaryColorButton
-                            type="submit"
-                            disabled={isLoading}
-                            isFullWidth
-                            style={{ marginTop: "1rem" }}
-                        >
-                            Sign In
-                        </PrimaryColorButton>
-                    </LoginForm>
+          <LoginForm onSubmit={handleSignIn}>
+            <TextInput
+              label="Email"
+              name="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email"
+              required
+            />
+            <TextInput
+              label="Password"
+              name="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter your password"
+              type="password"
+              required
+            />
+            <PrimaryColorButton
+              type="submit"
+              disabled={isLoading}
+              isFullWidth
+              style={{ marginTop: "1rem" }}
+            >
+              Sign In
+            </PrimaryColorButton>
+          </LoginForm>
 
-                    {/* FOOTER */}
-                    <FormFooterContainer>
-                        <DividerContainer>
-                            <Divider />
-                            <p className={headerFont.className}>Other</p>
-                            <Divider />
-                        </DividerContainer>
+          {/* FOOTER */}
+          <FormFooterContainer>
+            <DividerContainer>
+              <Divider />
+              <p className={headerFont.className}>Other</p>
+              <Divider />
+            </DividerContainer>
 
-                        <OtherContent>
-                            <p>Don&apos;t have an account?</p>
-                            <PrimaryColorOutlinedButton onClick={() => router.push("/signup")} isFullWidth>
-                                Sign Up
-                            </PrimaryColorOutlinedButton>
-                            <a href="/user/password/forgot">Forgot password?</a>
-                        </OtherContent>
-                    </FormFooterContainer>
-                </LeftPanelContent>
-            </LeftPanel>
+            <OtherContent>
+              <p>Don&apos;t have an account?</p>
+              <PrimaryColorOutlinedButton onClick={() => router.push("/signup")} isFullWidth>
+                Sign Up
+              </PrimaryColorOutlinedButton>
+              <a href="/user/password/forgot">Forgot password?</a>
+            </OtherContent>
+          </FormFooterContainer>
+        </LeftPanelContent>
+      </LeftPanel>
 
-            {/* RIGHT PANEL */}
-            <RightPanel>
-                <BackgroundImage
-                    src="/images/sign-in-sign-up-bg.jpg"
-                    alt="Login Signup Graphic"
-                    fill
-                    priority
-                />
-                <TitleLogoWrapper>
-                    <TitleLogo />
-                </TitleLogoWrapper>
-            </RightPanel>
-        </Container>
-    );
+      {/* RIGHT PANEL */}
+      <RightPanel>
+        <BackgroundImage
+          src="/images/sign-in-sign-up-bg.jpg"
+          alt="Login Signup Graphic"
+          fill
+          priority
+        />
+        <TitleLogoWrapper>
+          <TitleLogo />
+        </TitleLogoWrapper>
+      </RightPanel>
+    </Container>
+  );
 }

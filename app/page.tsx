@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import styled from "styled-components";
 import { PrimaryColorButton } from "./components/Buttons";
+import { useRedirectIfLoggedIn } from "./hooks/useRedirectIfLoggedIn";
 
 // Full hero container
 const HeroContainer = styled.section`
@@ -50,6 +51,8 @@ const SubTitle = styled.h2`
 `;
 
 export default function Home() {
+  // redirect to dashboard if logged in
+  useRedirectIfLoggedIn();
   const router = useRouter();
 
   return (
