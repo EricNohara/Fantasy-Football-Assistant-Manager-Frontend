@@ -9,6 +9,7 @@ export interface ILeagueData {
   leagueName: string;
   rosterSettings: IRosterSettings;
   scoringSettings: IScoringSettings;
+  defenses: [];
 }
 
 export interface IUserInfo {
@@ -23,6 +24,7 @@ export interface IUserInfo {
 export interface IPlayerData {
   game: IGameData;
   player: IPlayerInfo;
+  picked: boolean;
   opponent: IOpponentTeam;
   seasonStats: IPlayerStats;
   weeklyStats: IPlayerStats[];
@@ -140,4 +142,35 @@ export interface IScoringSettings {
   points_per_passing_yard: number;
   points_per_rushing_yard: number;
   points_per_reception_yard: number;
+}
+
+export interface ILeagueDefense {
+  game: IGameData;
+  team: ITeamInfo;
+  picked: boolean;
+  opponent: IDefenseOpponentTeam;
+  seasonStats: ITeamDefensiveStats;
+}
+
+export interface IDefenseOpponentTeam {
+  team: ITeamInfo;
+  offensiveStats: ITeamOffensiveStats;
+}
+
+export interface ITeamOffensiveStats {
+  id: string;
+  carries: number | null;
+  targets: number | null;
+  attempts: number | null;
+  receptions: number | null;
+  completions: number | null;
+  passing_tds: number | null;
+  rushing_tds: number | null;
+  passing_yards: number | null;
+  receiving_tds: number | null;
+  rushing_yards: number | null;
+  sacks_against: number | null;
+  fumbles_against: number | null;
+  receiving_yards: number | null;
+  passing_interceptions: number | null;
 }

@@ -18,7 +18,7 @@ const ListWrapper = styled.div`
 const PlayerCard = styled.div`
   display: flex;
   align-items: center;
-  gap: 1rem;
+  justify-content: space-between;
   padding: 0.5rem 1rem;
   border-radius: var(--global-border-radius);
   background-color: var(--color-base-dark-3);
@@ -28,7 +28,14 @@ const PlayerCard = styled.div`
 
   &:hover {
     transform: translateY(-2px);
+    cursor: pointer;
   }
+`;
+
+const PlayerSimpleData = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 1rem;
 `;
 
 const PlayerImage = styled.img`
@@ -36,12 +43,19 @@ const PlayerImage = styled.img`
   height: 60px;
   border-radius: 50%;
   object-fit: cover;
+  background-color: white;
 `;
 
 const PlayerInfo = styled.div`
   display: flex;
     gap: 2rem;
   `;
+
+const PlayerStartInfo = styled.div`
+  display: flex;
+    gap: 2rem;
+    justify-self: end;
+`;
 
 const PlayerName = styled.span`
   font-weight: bold;
@@ -51,6 +65,18 @@ const PlayerName = styled.span`
 const PlayerData = styled.span`
   font-size: 0.9rem;
   color: var(--color-txt-3);
+`;
+
+const PlayerStartSitTag = styled.div<{ $picked?: boolean }>`
+  width: 75px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  border-radius: var(--global-border-radius);
+  background-color: ${({ $picked }) => $picked ? "var(--color-green)" : "#cf5353"};
+  font-weight: bold;
+  color: white;
 `;
 
 interface IPlayerPositionTagProps {
@@ -68,7 +94,11 @@ const positionColors: Record<string, string> = {
 };
 
 const PlayerPositionTag = styled.div<IPlayerPositionTagProps>`
-  padding: 0.5rem 1rem;
+  width: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
   border-radius: var(--global-border-radius);
   background-color: ${({ position }) => positionColors[position] ?? "gray"};
   font-weight: bold;
@@ -80,16 +110,22 @@ export default function PlayerList({ players }: IPlayerListProps) {
         <ListWrapper>
             {players.map((playerData) => (
                 <PlayerCard key={playerData.player.id}>
-                    <PlayerPositionTag position={playerData.player.position}>{playerData.player.position}</PlayerPositionTag>
-                    <PlayerImage
-                        src={playerData.player.headshot_url ?? "/default_player.png"}
-                        alt={playerData.player.name}
-                    />
-                    <PlayerInfo>
-                        <PlayerName className={headerFont.className}>{playerData.player.name}</PlayerName>
-                        <PlayerData>{playerData.player.team_id}</PlayerData>
-                        <PlayerData>{formatGameInfo(playerData.game, playerData.player)}</PlayerData>
-                    </PlayerInfo>
+                    <PlayerSimpleData>
+                        <PlayerPositionTag position={playerData.player.position}>{playerData.player.position}</PlayerPositionTag>
+                        <PlayerImage
+                            src={playerData.player.headshot_url ?? "/default_player.png"}
+                            alt={playerData.player.name}
+                        />
+                        <PlayerInfo>
+                            <PlayerName className={headerFont.className}>{playerData.player.name}</PlayerName>
+                            <PlayerData>{playerData.player.team_id}</PlayerData>
+                            <PlayerData>{formatGameInfo(playerData.game, playerData.player)}</PlayerData>
+                            <PlayerData>{playerData.player.status_description}</PlayerData>
+                        </PlayerInfo>
+                    </PlayerSimpleData>
+                    <PlayerStartInfo>
+                        {<PlayerStartSitTag $picked={playerData.picked}>{playerData.picked ? "Start" : "Sit"}</PlayerStartSitTag>}
+                    </PlayerStartInfo>
                 </PlayerCard>
             ))}
         </ListWrapper>
