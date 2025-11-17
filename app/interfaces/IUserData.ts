@@ -1,6 +1,14 @@
 export interface IUserData {
-  leagues: IPlayersInLeague[];
+  leagues: ILeagueData[];
   userInfo: IUserInfo;
+}
+
+export interface ILeagueData {
+  players: IPlayerData[];
+  leagueId: string;
+  leagueName: string;
+  rosterSettings: IRosterSettings;
+  scoringSettings: IScoringSettings;
 }
 
 export interface IUserInfo {
@@ -10,10 +18,6 @@ export interface IUserInfo {
   allow_emails: boolean;
   fullname: string | null;
   phone_number: string | null;
-}
-
-export interface IPlayersInLeague {
-  players: IPlayerData[];
 }
 
 export interface IPlayerData {
@@ -114,4 +118,26 @@ export interface IPlayerStats {
   rushing_first_downs: number | null;
   interceptions_against: number | null;
   receiving_first_downs: number | null;
+}
+
+export interface IRosterSettings {
+  id: string;
+  k_count: number;
+  ir_count: number;
+  qb_count: number;
+  rb_count: number;
+  te_count: number;
+  wr_count: number;
+  def_count: number;
+  flex_count: number;
+  bench_count: number;
+}
+
+export interface IScoringSettings {
+  id: string;
+  points_per_td: number;
+  points_per_reception: number;
+  points_per_passing_yard: number;
+  points_per_rushing_yard: number;
+  points_per_reception_yard: number;
 }
