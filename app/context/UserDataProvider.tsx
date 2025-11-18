@@ -46,6 +46,8 @@ export function UserDataProvider({ children }: { children: ReactNode }) {
             }
 
             const data: IUserData = await res.json();
+            console.log(data);
+
             setUserData(data);
         } catch (error) {
             console.error("Error fetching user data:", error);

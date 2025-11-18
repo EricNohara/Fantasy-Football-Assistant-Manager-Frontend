@@ -26,6 +26,11 @@ const LeagueDropdown = styled.select`
   }
 `;
 
+const NoDataMessage = styled.p`
+    font-style: italic;
+    color: var(--color-txt-3);
+`;
+
 export default function DashboardPage() {
     const router = useRouter();
     const { userData } = useUserData();
@@ -58,7 +63,7 @@ export default function DashboardPage() {
         router.push(`/dashboard/advice?leagueId=${selectedLeagueData?.leagueId}`)
     }
 
-    const editButton = <PrimaryColorButton onClick={() => router.push("/stats")}>Edit Roster</PrimaryColorButton>;
+    const editButton = <PrimaryColorButton onClick={() => router.push(`/stats?leagueId=${selectedLeagueData?.leagueId}`)}>Edit Roster</PrimaryColorButton>;
     const adviceButton = <PrimaryColorButton onClick={handleClickAdvice}>Generate Advice</PrimaryColorButton>;
 
     // Secondary "button" as dropdown
@@ -74,11 +79,14 @@ export default function DashboardPage() {
 
     return (
         <AppNavWrapper title="ROSTER DASHBOARD" button1={(selectedLeagueData?.players?.length ?? 0) > 0 ? adviceButton : editButton} button2={leagueDropdown}>
-            {selectedLeagueData ? (
-                <PlayerList players={selectedLeagueData.players ?? []} defenses={selectedLeagueData.defenses ?? []} />
-            ) : (
-                <p>No league selected</p>
-            )}
+            {selectedLeagueData ?
+                ((selectedLeagueData.players?.length ?? 0) > 0 || (selectedLeagueData.defenses?.length ?? 0) > 0) ?
+                    (
+                        <PlayerList players={selectedLeagueData.players ?? []} defenses={selectedLeagueData.defenses ?? []} />
+                    ) : <NoDataMessage>Your roster is empty. Click edit roster to add players to your roster for this league.</NoDataMessage>
+                : (
+                    <NoDataMessage>No league selected</NoDataMessage>
+                )}
         </AppNavWrapper>
     )
 }

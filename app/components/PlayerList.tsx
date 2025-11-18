@@ -43,11 +43,20 @@ const PlayerSimpleData = styled.div`
 `;
 
 const PlayerImage = styled.img`
-  width: 60px;
-  height: 60px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
   object-fit: cover;
   background-color: white;
+`;
+
+const DefenseImage = styled.img`
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+  background-color: white;
+  padding: 5px;
 `;
 
 const PlayerInfo = styled.div`
@@ -135,6 +144,7 @@ export default function PlayerList({ players, defenses = [], displayStartSit = t
             <PlayerPositionTag position={playerData.player.position}>{playerData.player.position}</PlayerPositionTag>
 
             <PlayerImage
+              loading="lazy"
               src={playerData.player.headshot_url ?? "/default_player.png"}
               alt={playerData.player.name}
             />
@@ -159,7 +169,8 @@ export default function PlayerList({ players, defenses = [], displayStartSit = t
           <PlayerCard key={def.team.id} onClick={() => onDefenseClick && onDefenseClick(def)}>
             <PlayerSimpleData>
               <PlayerPositionTag position="DEF">DEF</PlayerPositionTag>
-              <PlayerImage
+              <DefenseImage
+                loading="lazy"
                 src={def.team.logo_url ?? "/default_player.png"}
                 alt={def.team.name}
               />

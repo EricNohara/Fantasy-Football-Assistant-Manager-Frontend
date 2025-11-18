@@ -7,8 +7,8 @@ import { ILeagueData, ILeagueDefense, IPlayerData } from "../interfaces/IUserDat
 import styled from "styled-components";
 import { usePlayersByPosition } from "../hooks/usePlayersByPosition";
 import PlayerList from "../components/PlayerList";
-import LoadingSpinner from "../components/LoadingSpinner";
 import LoadingMessage from "../components/LoadingMessage";
+import { useSearchParams } from "next/navigation";
 
 const LeagueDropdown = styled.select`
   padding: 0.5rem 1rem;
@@ -31,7 +31,9 @@ export default function StatsPage() {
   const { userData } = useUserData();
   const [selectedLeagueData, setSelectedLeagueData] = useState<ILeagueData | null>(null);
   const [selectedPosition, setSelectedPosition] = useState<string>("QB");
-  // const [players, setPlayers] = useState<PlayerResponse>(null);
+
+  const searchParams = useSearchParams();
+  const leagueId = searchParams.get("leagueId");
 
   const POSITIONS = ["QB", "RB", "WR", "TE", "K", "DEF"];
 
@@ -40,6 +42,12 @@ export default function StatsPage() {
       setSelectedLeagueData(userData.leagues[0]);
     }
   }, [userData]);
+
+  useEffect(() => {
+    if (userData?.leagues && userData.leagues.length > 0 && leagueId) {
+      setSelectedLeagueData(userData.leagues.find((l) => l.leagueId === leagueId) ?? userData.leagues[0]);
+    }
+  }, [userData, leagueId]);
 
   const { players, isLoading, error, refresh } = usePlayersByPosition(selectedPosition);
 
@@ -50,7 +58,9 @@ export default function StatsPage() {
     if (selectedPosition === "DEF") {
       defenses = (players as unknown as ILeagueDefense[]).map(d => ({ ...d, picked: false }));
     } else {
-      offensivePlayers = (players as unknown as IPlayerData[]).map(p => ({ ...p, picked: false }));
+      offensivePlayers = (players as unknown as IPlayerData[])
+        .map(p => ({ ...p, picked: false }))
+        .sort((a, b) => (b.seasonStats?.fantasy_points ?? 0) - (a.seasonStats?.fantasy_points ?? 0));
     }
   }
 

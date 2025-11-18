@@ -6,13 +6,13 @@ import styled from "styled-components";
 import { X } from "lucide-react";
 
 interface OverlayProps {
-    children: ReactNode;
-    isOpen: boolean;
-    onClose: () => void;
+  children: ReactNode;
+  isOpen: boolean;
+  onClose: () => void;
 }
 
-const OverlayWrapper = styled.div<{ isOpen: boolean }>`
-  display: ${({ isOpen }) => (isOpen ? "flex" : "none")};
+const OverlayWrapper = styled.div<{ $isOpen: boolean }>`
+  display: ${({ $isOpen }) => ($isOpen ? "flex" : "none")};
   position: fixed;
   top: 0;
   left: 0;
@@ -53,14 +53,14 @@ const CloseButton = styled.button`
 `;
 
 export default function Overlay({ children, isOpen, onClose }: OverlayProps) {
-    return (
-        <OverlayWrapper isOpen={isOpen} onClick={onClose}>
-            <OverlayContent onClick={(e) => e.stopPropagation()}>
-                {children}
-                <CloseButton onClick={onClose} aria-label="Close overlay">
-                    <X size={24} />
-                </CloseButton>
-            </OverlayContent>
-        </OverlayWrapper>
-    );
+  return (
+    <OverlayWrapper $isOpen={isOpen} onClick={onClose}>
+      <OverlayContent onClick={(e) => e.stopPropagation()}>
+        {children}
+        <CloseButton onClick={onClose} aria-label="Close overlay">
+          <X size={24} />
+        </CloseButton>
+      </OverlayContent>
+    </OverlayWrapper>
+  );
 }
