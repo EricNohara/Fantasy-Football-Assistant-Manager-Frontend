@@ -56,7 +56,7 @@ export default function StatsPage() {
     }
   }, [userData, leagueId]);
 
-  const { players, isLoading, error, refresh } = usePlayersByPosition(selectedPosition);
+  const { players, isLoading, refresh } = usePlayersByPosition(selectedPosition);
 
   let defenses: ILeagueDefense[] = [];
   let offensivePlayers: IPlayerData[] = [];
@@ -71,7 +71,6 @@ export default function StatsPage() {
     }
   }
 
-  // Optional: If you want to manually trigger refresh whenever position changes
   useEffect(() => {
     refresh();
   }, [selectedPosition, refresh]);
@@ -108,8 +107,11 @@ export default function StatsPage() {
   const onDefenseAdd = (defense: ILeagueDefense) => {
     setSelectedDefense(defense);
     setSelectedPlayer(null);
-    setShowStatsOverlay(false);
+
+    // if ()
+
     setShowAddOverlay(true);
+    setShowStatsOverlay(false);
   }
 
   const onDefenseClick = (defense: ILeagueDefense) => {
@@ -121,8 +123,8 @@ export default function StatsPage() {
   const onPlayerAdd = (player: IPlayerData) => {
     setSelectedPlayer(player);
     setSelectedDefense(null);
-    setShowStatsOverlay(false);
     setShowAddOverlay(true);
+    setShowStatsOverlay(false);
   }
 
   const onPlayerClick = (player: IPlayerData) => {
