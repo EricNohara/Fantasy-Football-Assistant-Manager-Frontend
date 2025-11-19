@@ -1,4 +1,4 @@
-import { IPlayerStats, IPlayerStatsWithWeek } from "../interfaces/IUserData";
+import { IPlayerStats, IPlayerStatsWithWeek } from "../../interfaces/IUserData";
 import styled from "styled-components";
 
 const ScrollWrapper = styled.div`
@@ -65,7 +65,7 @@ export default function PlayerWeeklyStatsTable({ stats }: IPlayerSeasonStatsTabl
                 <tbody>
                     {
                         stats.map((s) =>
-                            <tr>
+                            <tr key={s.stats.id}>
                                 <td>{s.week ?? "-"}</td>
                                 <td>{s.stats.passing_attempts ?? "-"}</td>
                                 <td>{s.stats.completions ?? "-"}</td>

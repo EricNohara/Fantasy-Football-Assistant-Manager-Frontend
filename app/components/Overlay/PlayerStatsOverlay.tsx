@@ -1,8 +1,8 @@
 "use client";
 
 import styled from "styled-components";
-import { IPlayerData } from "../interfaces/IUserData";
-import { PlayerPositionTag } from "./PlayerList";
+import { IPlayerData } from "../../interfaces/IUserData";
+import { PlayerPositionTag } from "../PlayerList";
 import { formatGameInfo } from "@/lib/utils/formatGameInfo";
 import PlayerSeasonStatsTable from "./PlayerSeasonStatsTable";
 import PlayerWeeklyStatsTable from "./PlayerWeeklyStatsTable";
@@ -78,45 +78,45 @@ const StatsTable = styled.table`
 `;
 
 interface IPlayerStatsOverlayProps {
-    player: IPlayerData | null;
+  player: IPlayerData | null;
 }
 
 export default function PlayerStatsOverlay({ player }: IPlayerStatsOverlayProps) {
-    if (!player) return null;
+  if (!player) return null;
 
-    const seasonStats = player.seasonStats ?? {};
-    const weeklyStats = player.weeklyStats ?? [];
+  const seasonStats = player.seasonStats ?? {};
+  const weeklyStats = player.weeklyStats ?? [];
 
-    return (
-        <>
-            <OverlayHeader>
-                <PlayerImage src={player.player.headshot_url ?? "/default_player.png"} alt={player.player.name} />
-                <NameStack>
-                    <h1>{player.player.name}</h1>
-                    <h2>{player.player.team_id} - {formatGameInfo(player.game, player.player)}</h2>
-                    <h2>Status: {player.player.status_description ?? "N/A"}</h2>
-                </NameStack>
-                <PositionTagWrapper>
-                    <PlayerPositionTag position={player.player.position}>
-                        {player.player.position}
-                    </PlayerPositionTag>
-                </PositionTagWrapper>
-            </OverlayHeader>
+  return (
+    <>
+      <OverlayHeader>
+        <PlayerImage src={player.player.headshot_url ?? "/default_player.png"} alt={player.player.name} />
+        <NameStack>
+          <h1>{player.player.name}</h1>
+          <h2>{player.player.team_id} - {formatGameInfo(player.game, player.player)}</h2>
+          <h2>Status: {player.player.status_description ?? "N/A"}</h2>
+        </NameStack>
+        <PositionTagWrapper>
+          <PlayerPositionTag position={player.player.position}>
+            {player.player.position}
+          </PlayerPositionTag>
+        </PositionTagWrapper>
+      </OverlayHeader>
 
-            <OverlayBody>
-                <div>
-                    <h3>Season Stats</h3>
-                    <PlayerSeasonStatsTable stats={player.seasonStats} />
-                </div>
+      <OverlayBody>
+        <div>
+          <h3>Season Stats</h3>
+          <PlayerSeasonStatsTable stats={player.seasonStats} />
+        </div>
 
-                {weeklyStats.length > 0 && (
-                    <div>
-                        <h3>Recent Weekly Stats</h3>
-                        <PlayerWeeklyStatsTable stats={player.weeklyStats} />
-                    </div>
-                )}
-            </OverlayBody>
-        </>
-    );
+        {weeklyStats.length > 0 && (
+          <div>
+            <h3>Recent Weekly Stats</h3>
+            <PlayerWeeklyStatsTable stats={player.weeklyStats} />
+          </div>
+        )}
+      </OverlayBody>
+    </>
+  );
 }
 

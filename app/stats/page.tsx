@@ -9,8 +9,9 @@ import { usePlayersByPosition } from "../hooks/usePlayersByPosition";
 import PlayerList from "../components/PlayerList";
 import LoadingMessage from "../components/LoadingMessage";
 import { useSearchParams } from "next/navigation";
-import Overlay from "../components/Overlay";
-import PlayerStatsOverlay from "../components/PlayerStatsOverlay";
+import Overlay from "../components/Overlay/Overlay";
+import PlayerStatsOverlay from "../components/Overlay/PlayerStatsOverlay";
+import DefenseStatsOverlay from "../components/Overlay/DefenseStatsOverlay";
 
 const LeagueDropdown = styled.select`
   padding: 0.5rem 1rem;
@@ -36,6 +37,7 @@ export default function StatsPage() {
   const [showAddOverlay, setShowAddOverlay] = useState(false);
   const [showStatsOverlay, setShowStatsOverlay] = useState(false);
   const [selectedPlayer, setSelectedPlayer] = useState<IPlayerData | null>(null);
+  const [selectedDefense, setSelectedDefense] = useState<ILeagueDefense | null>(null);
 
   const searchParams = useSearchParams();
   const leagueId = searchParams.get("leagueId");
@@ -80,16 +82,6 @@ export default function StatsPage() {
     setSelectedLeagueData(league);
   };
 
-  const handleAddPlayer = (playerId: string, playerName: string) => {
-    // TODO: Implement actual add player functionality
-    alert(`Adding ${playerName} to your team!`);
-  };
-
-  const handleAddDefense = (teamId: string, teamName: string) => {
-    // TODO: Implement actual add defense functionality
-    alert(`Adding ${teamName} defense to your team!`);
-  };
-
   const leagueDropdown = (
     <LeagueDropdown
       value={selectedLeagueData?.leagueId ?? ""}
@@ -119,6 +111,8 @@ export default function StatsPage() {
 
   const onDefenseClick = (defense: ILeagueDefense) => {
     setShowStatsOverlay(true);
+    setSelectedPlayer(null);
+    setSelectedDefense(defense);
   }
 
   const onPlayerAdd = (player: IPlayerData) => {
@@ -127,6 +121,7 @@ export default function StatsPage() {
 
   const onPlayerClick = (player: IPlayerData) => {
     setShowStatsOverlay(true);
+    setSelectedDefense(null);
     setSelectedPlayer(player);
   }
 
@@ -148,7 +143,8 @@ export default function StatsPage() {
       }
       {showStatsOverlay &&
         <Overlay isOpen={showStatsOverlay} onClose={() => setShowStatsOverlay(false)}>
-          <PlayerStatsOverlay player={selectedPlayer} />
+          {selectedPlayer && <PlayerStatsOverlay player={selectedPlayer} />}
+          {selectedDefense && <DefenseStatsOverlay defense={selectedDefense} />}
         </Overlay>
       }
     </AppNavWrapper>
