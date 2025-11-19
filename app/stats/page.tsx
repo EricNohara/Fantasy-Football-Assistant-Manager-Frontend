@@ -9,6 +9,8 @@ import { usePlayersByPosition } from "../hooks/usePlayersByPosition";
 import PlayerList from "../components/PlayerList";
 import LoadingMessage from "../components/LoadingMessage";
 import { useSearchParams } from "next/navigation";
+import Overlay from "../components/Overlay";
+import PlayerStatsOverlay from "../components/PlayerStatsOverlay";
 
 const LeagueDropdown = styled.select`
   padding: 0.5rem 1rem;
@@ -31,6 +33,9 @@ export default function StatsPage() {
   const { userData } = useUserData();
   const [selectedLeagueData, setSelectedLeagueData] = useState<ILeagueData | null>(null);
   const [selectedPosition, setSelectedPosition] = useState<string>("QB");
+  const [showAddOverlay, setShowAddOverlay] = useState(false);
+  const [showStatsOverlay, setShowStatsOverlay] = useState(false);
+  const [selectedPlayer, setSelectedPlayer] = useState<IPlayerData | null>(null);
 
   const searchParams = useSearchParams();
   const leagueId = searchParams.get("leagueId");
@@ -108,15 +113,44 @@ export default function StatsPage() {
     </LeagueDropdown>
   );
 
+  const onDefenseAdd = (defense: ILeagueDefense) => {
+    setShowAddOverlay(true);
+  }
+
+  const onDefenseClick = (defense: ILeagueDefense) => {
+    setShowStatsOverlay(true);
+  }
+
+  const onPlayerAdd = (player: IPlayerData) => {
+    setShowAddOverlay(true);
+  }
+
+  const onPlayerClick = (player: IPlayerData) => {
+    setShowStatsOverlay(true);
+    setSelectedPlayer(player);
+  }
+
   return (
     <AppNavWrapper title="LEAGUE STATS" button1={positionDropdown} button2={leagueDropdown}>
       {isLoading ?
         <LoadingMessage message="Loading players..." />
         : selectedPosition === "DEF" ? (
-          <PlayerList players={[]} defenses={defenses} displayStartSit={false} />
+          <PlayerList players={[]} defenses={defenses} displayStartSit={false} onDefenseAdd={onDefenseAdd} onDefenseClick={onDefenseClick} />
         ) : (
-          <PlayerList players={offensivePlayers} displayStartSit={false} />
+          <PlayerList players={offensivePlayers} displayStartSit={false} onPlayerAdd={onPlayerAdd} onPlayerClick={onPlayerClick} />
         )}
+
+      {/* overlays */}
+      {showAddOverlay &&
+        <Overlay isOpen={showAddOverlay} onClose={() => setShowAddOverlay(false)}>
+          Add overlay
+        </Overlay>
+      }
+      {showStatsOverlay &&
+        <Overlay isOpen={showStatsOverlay} onClose={() => setShowStatsOverlay(false)}>
+          <PlayerStatsOverlay player={selectedPlayer} />
+        </Overlay>
+      }
     </AppNavWrapper>
   );
 }

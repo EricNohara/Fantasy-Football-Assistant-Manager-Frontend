@@ -5,9 +5,11 @@ import { PrimaryColorButton } from "../components/Buttons";
 import { useRouter } from "next/navigation";
 import { useUserData } from "../context/UserDataProvider";
 import { useEffect, useState } from "react";
-import { ILeagueData } from "../interfaces/IUserData";
+import { ILeagueData, IPlayerData } from "../interfaces/IUserData";
 import styled from "styled-components";
 import PlayerList from "../components/PlayerList";
+import PlayerStatsOverlay from "../components/PlayerStatsOverlay";
+import Overlay from "../components/Overlay";
 
 const LeagueDropdown = styled.select`
   padding: 0.5rem 1rem;
@@ -35,6 +37,8 @@ export default function DashboardPage() {
     const router = useRouter();
     const { userData } = useUserData();
     const [selectedLeagueData, setSelectedLeagueData] = useState<ILeagueData | null>(null);
+    const [showOverlay, setShowOverlay] = useState<boolean>(false);
+    const [selectedPlayer, setSelectedPlayer] = useState<IPlayerData | null>(null);
 
     // Set default selected league on load (first one)
     useEffect(() => {
@@ -77,16 +81,33 @@ export default function DashboardPage() {
         </LeagueDropdown>
     );
 
+    const onPlayerClick = (player: IPlayerData) => {
+        setShowOverlay(true);
+        setSelectedPlayer(player);
+    }
+
     return (
         <AppNavWrapper title="ROSTER DASHBOARD" button1={(selectedLeagueData?.players?.length ?? 0) > 0 ? adviceButton : editButton} button2={leagueDropdown}>
             {selectedLeagueData ?
                 ((selectedLeagueData.players?.length ?? 0) > 0 || (selectedLeagueData.defenses?.length ?? 0) > 0) ?
                     (
-                        <PlayerList players={selectedLeagueData.players ?? []} defenses={selectedLeagueData.defenses ?? []} />
+                        <PlayerList
+                            players={selectedLeagueData.players ?? []}
+                            onPlayerClick={onPlayerClick}
+                            defenses={selectedLeagueData.defenses ?? []}
+                        />
                     ) : <NoDataMessage>Your roster is empty. Click edit roster to add players to your roster for this league.</NoDataMessage>
                 : (
                     <NoDataMessage>No league selected</NoDataMessage>
                 )}
+
+            {/* overlay */}
+            {
+                showOverlay &&
+                <Overlay isOpen={showOverlay} onClose={() => setShowOverlay(false)}>
+                    <PlayerStatsOverlay player={selectedPlayer} />
+                </Overlay>
+            }
         </AppNavWrapper>
     )
 }

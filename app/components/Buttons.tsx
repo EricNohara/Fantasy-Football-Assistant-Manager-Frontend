@@ -31,6 +31,10 @@ const PrimaryButton = styled(ButtonBase)`
   }
 `;
 
+const PrimarySmallButton = styled(PrimaryButton)`
+  padding: 0.3rem;
+`;
+
 const PrimaryOutlinedButton = styled(ButtonBase)`
   background-color: transparent;
   border: 2px solid var(--color-primary);
@@ -66,6 +70,18 @@ export function PrimaryColorButton({ children, isFullWidth, ...props }: ButtonPr
     >
       {children}
     </PrimaryButton>
+  );
+}
+
+export function PrimaryColorSmallButton({ children, isFullWidth, ...props }: ButtonProps) {
+  return (
+    <PrimarySmallButton
+      className={headerFont.className}
+      $isFullWidth={isFullWidth}
+      {...props}
+    >
+      {children}
+    </PrimarySmallButton>
   );
 }
 
