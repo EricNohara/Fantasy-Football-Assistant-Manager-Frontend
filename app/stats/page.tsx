@@ -35,6 +35,7 @@ const LeagueDropdown = styled.select`
 
 export default function StatsPage() {
   const { userData } = useUserData();
+  const supabase = createClient();
   const [selectedLeagueData, setSelectedLeagueData] = useState<ILeagueData | null>(null);
   const [selectedPosition, setSelectedPosition] = useState<string>("QB");
   const [showAddOverlay, setShowAddOverlay] = useState(false);
@@ -109,12 +110,39 @@ export default function StatsPage() {
     </LeagueDropdown>
   );
 
-  const onDefenseAdd = (defense: ILeagueDefense) => {
+  const onDefenseAdd = async (defense: ILeagueDefense) => {
     setSelectedDefense(defense);
     setSelectedPlayer(null);
 
     if (isSpaceRemainingForPlayerAtPosition(selectedLeagueData, selectedPosition)) {
-      alert("Player has space on their roster. Make the PUT route call here!");
+      try {
+        // get the session
+        const { data: sessionData } = await supabase.auth.getSession();
+        const accessToken = sessionData?.session?.access_token;
+        if (!accessToken) throw new Error("User not authenticated");
+
+        const payload = {
+          leagueId: selectedLeagueData?.leagueId,
+          memberId: selectedDefense?.team.id,
+          isDefense: true
+        }
+
+        const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/UpdateUserLeague/member`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${accessToken}`
+          },
+          body: JSON.stringify(payload)
+        })
+
+        if (!res.ok) throw new Error("Failed to add defense to roster")
+      } catch (e) {
+        alert("Failed to add defense to roster")
+        console.error(e);
+      } finally {
+        // close the stats overlay if it is open
+        setShowStatsOverlay(false);
+      }
       return;
     }
 
@@ -129,12 +157,39 @@ export default function StatsPage() {
     setSelectedDefense(defense);
   }
 
-  const onPlayerAdd = (player: IPlayerData) => {
+  const onPlayerAdd = async (player: IPlayerData) => {
     setSelectedPlayer(player);
     setSelectedDefense(null);
 
     if (isSpaceRemainingForPlayerAtPosition(selectedLeagueData, selectedPosition)) {
-      alert("Player has space on their roster. Make the PUT route call here!");
+      try {
+        // get the session
+        const { data: sessionData } = await supabase.auth.getSession();
+        const accessToken = sessionData?.session?.access_token;
+        if (!accessToken) throw new Error("User not authenticated");
+
+        const payload = {
+          leagueId: selectedLeagueData?.leagueId,
+          memberId: selectedPlayer?.player.id,
+          isDefense: false
+        }
+
+        const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/UpdateUserLeague/member`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${accessToken}`
+          },
+          body: JSON.stringify(payload)
+        })
+
+        if (!res.ok) throw new Error("Failed to add player to roster")
+      } catch (e) {
+        alert("Failed to add player to roster")
+        console.error(e);
+      } finally {
+        // close the stats overlay if it is open
+        setShowStatsOverlay(false);
+      }
       return;
     }
 
@@ -152,7 +207,6 @@ export default function StatsPage() {
   const onPlayerSwapClick = async () => {
     try {
       // get the session
-      const supabase = createClient();
       const { data: sessionData } = await supabase.auth.getSession();
       const accessToken = sessionData?.session?.access_token;
       if (!accessToken) throw new Error("User not authenticated");
@@ -225,7 +279,7 @@ export default function StatsPage() {
           />
           {selectedPlayer && `Adding ${selectedPlayer.player.name}`}
           {selectedDefense && `Adding ${selectedDefense.team.name}`}
-          <PrimaryColorButton>Swap</PrimaryColorButton>
+          <PrimaryColorButton onClick={onPlayerSwapClick}>Swap</PrimaryColorButton>
         </Overlay>
       }
       {showStatsOverlay &&
