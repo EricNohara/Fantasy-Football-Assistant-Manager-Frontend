@@ -11,6 +11,7 @@ import TextInput from "../components/TextInput";
 import Image from "next/image";
 import TitleLogo from "../components/TitleLogo";
 import { useRedirectIfLoggedIn } from "../hooks/useRedirectIfLoggedIn";
+import { useUserData } from "../context/UserDataProvider";
 
 const Container = styled.div`
   display: grid;
@@ -142,6 +143,7 @@ export default function SignInPage() {
   const supabase = createClient();
   const router = useRouter();
   const { setIsLoggedIn } = useAuth();
+  const { refreshUserData } = useUserData();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -163,6 +165,7 @@ export default function SignInPage() {
         //  redirect user to dashboard page
         console.log(data.session);
         setIsLoggedIn(true);
+        refreshUserData();
         router.push("/dashboard");
       }
     } catch (err) {

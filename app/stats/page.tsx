@@ -66,8 +66,25 @@ const StickyHeader = styled.div`
   padding: 2rem;
 `;
 
+const SearchInput = styled.input`
+  width: 100%;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--global-border-radius);
+  background-color: var(--color-base-dark-4);
+  border: none;
+  outline: none;
+  font-size: 1rem;
+  color: white;
+  margin-bottom: 1rem;
+
+  &::placeholder {
+    color: var(--color-txt-3);
+  }
+`;
+
+
 export default function StatsPage() {
-  const { userData } = useUserData();
+  const { userData, refreshUserData } = useUserData();
   const supabase = createClient();
   const [selectedLeagueData, setSelectedLeagueData] = useState<ILeagueData | null>(null);
   const [selectedPosition, setSelectedPosition] = useState<string>("QB");
@@ -77,6 +94,7 @@ export default function StatsPage() {
   const [selectedDefense, setSelectedDefense] = useState<ILeagueDefense | null>(null);
   const [selectedPlayerToSwap, setSelectedPlayerToSwap] = useState<IPlayerData | null>(null);
   const [selectedDefenseToSwap, setSelectedDefenseToSwap] = useState<ILeagueDefense | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const swapButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -162,19 +180,21 @@ export default function StatsPage() {
 
         const payload = {
           leagueId: selectedLeagueData?.leagueId,
-          memberId: selectedDefense?.team.id,
+          memberId: defense.team.id,
           isDefense: true
         }
 
         const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/UpdateUserLeague/member`, {
           method: "POST",
           headers: {
-            "Authorization": `Bearer ${accessToken}`
+            "Authorization": `Bearer ${accessToken}`,
+            "Content-Type": "application/json"
           },
           body: JSON.stringify(payload)
         })
 
         if (!res.ok) throw new Error("Failed to add defense to roster")
+        refreshUserData();
       } catch (e) {
         alert("Failed to add defense to roster")
         console.error(e);
@@ -212,7 +232,7 @@ export default function StatsPage() {
 
         const payload = {
           leagueId: selectedLeagueData?.leagueId,
-          memberId: selectedPlayer?.player.id,
+          memberId: player.player.id,
           isDefense: false
         }
 
@@ -226,6 +246,7 @@ export default function StatsPage() {
         })
 
         if (!res.ok) throw new Error("Failed to add player to roster")
+        refreshUserData();
       } catch (e) {
         alert("Failed to add player to roster")
         console.error(e);
@@ -275,6 +296,7 @@ export default function StatsPage() {
         });
 
       if (!res.ok) throw new Error("Player swap failed");
+      refreshUserData();
     } catch (e) {
       alert("Player swap failed")
       console.error(e);
@@ -288,15 +310,44 @@ export default function StatsPage() {
     }
   }
 
+  const filteredOffensivePlayers = offensivePlayers.filter(p =>
+    p.player.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const filteredDefenses = defenses.filter(d =>
+    d.team.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <AppNavWrapper title="LEAGUE STATS" button1={positionDropdown} button2={leagueDropdown}>
-      {isLoading ?
+      {isLoading ? (
         <LoadingMessage message="Loading players..." />
-        : selectedPosition === "DEF" ? (
-          <PlayerList players={[]} defenses={defenses} displayStartSit={false} onDefenseAdd={onDefenseAdd} onDefenseClick={onDefenseClick} />
-        ) : (
-          <PlayerList players={offensivePlayers} displayStartSit={false} onPlayerAdd={onPlayerAdd} onPlayerClick={onPlayerClick} />
-        )}
+      ) : (
+        <>
+          <SearchInput
+            placeholder={"Search players..."}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+
+          {selectedPosition === "DEF" ? (
+            <PlayerList
+              players={[]}
+              defenses={filteredDefenses}
+              displayStartSit={false}
+              onDefenseAdd={onDefenseAdd}
+              onDefenseClick={onDefenseClick}
+            />
+          ) : (
+            <PlayerList
+              players={filteredOffensivePlayers}
+              displayStartSit={false}
+              onPlayerAdd={onPlayerAdd}
+              onPlayerClick={onPlayerClick}
+            />
+          )}
+        </>
+      )}
 
       {/* overlays */}
       {showAddOverlay &&
