@@ -6,7 +6,7 @@ import { PlayerPositionTag } from "../PlayerList";
 import { formatTeamGameInfo } from "@/lib/utils/formatGameInfo";
 import TeamDefenseStatsTable from "./TeamDefenseStatsTable";
 import TeamOffenseStatsTable from "./TeamOffenseStatsTable";
-import { AddButton } from "../Buttons";
+import { AddButton, DeleteButton } from "../Buttons";
 
 const OverlayHeader = styled.div`
   position: relative;
@@ -85,57 +85,64 @@ const AddButtonWrapper = styled.div`
 `;
 
 interface IDefenseStatsOverlayProps {
-    defense: ILeagueDefense | null;
-    onAddDefense?: (defense: ILeagueDefense) => void
+  defense: ILeagueDefense | null;
+  onAddDefense?: (defense: ILeagueDefense) => void;
+  onDeleteDefense?: (defense: ILeagueDefense) => void;
 }
 
-export default function DefenseStatsOverlay({ defense, onAddDefense }: IDefenseStatsOverlayProps) {
-    if (!defense) return null;
+export default function DefenseStatsOverlay({ defense, onAddDefense, onDeleteDefense }: IDefenseStatsOverlayProps) {
+  if (!defense) return null;
 
-    const seasonStats = defense.seasonStats ?? {};
-    const opponentStats = defense.opponent?.offensiveStats ?? null;
+  const seasonStats = defense.seasonStats ?? {};
+  const opponentStats = defense.opponent?.offensiveStats ?? null;
 
-    return (
-        <>
-            <OverlayHeader>
-                <PlayerImage src={defense.team.logo_url ?? "/default_player.png"} alt={defense.team.name} />
-                <NameStack>
-                    <h1>{defense.team.name}</h1>
-                    <h2>{defense.team.id} - {formatTeamGameInfo(defense.game, defense)}</h2>
-                    <h2>{defense.team.division}</h2>
-                </NameStack>
-                <PositionTagWrapper>
-                    <PlayerPositionTag position="DEF">DEF</PlayerPositionTag>
-                </PositionTagWrapper>
-                {
-                    onAddDefense &&
-                    <AddButtonWrapper>
-                        <AddButton onClick={() => onAddDefense(defense)} />
-                    </AddButtonWrapper>
-                }
-            </OverlayHeader>
+  return (
+    <>
+      <OverlayHeader>
+        <PlayerImage src={defense.team.logo_url ?? "/default_player.png"} alt={defense.team.name} />
+        <NameStack>
+          <h1>{defense.team.name}</h1>
+          <h2>{defense.team.id} - {formatTeamGameInfo(defense.game, defense)}</h2>
+          <h2>{defense.team.division}</h2>
+        </NameStack>
+        <PositionTagWrapper>
+          <PlayerPositionTag position="DEF">DEF</PlayerPositionTag>
+        </PositionTagWrapper>
+        {
+          onAddDefense &&
+          <AddButtonWrapper>
+            <AddButton onClick={() => onAddDefense(defense)} />
+          </AddButtonWrapper>
+        }
+        {
+          onDeleteDefense &&
+          <AddButtonWrapper>
+            <DeleteButton onClick={() => onDeleteDefense(defense)} />
+          </AddButtonWrapper>
+        }
+      </OverlayHeader>
 
-            <OverlayBody>
-                <div>
-                    <h3>Season Stats</h3>
-                    <TeamDefenseStatsTable stats={seasonStats} />
-                </div>
+      <OverlayBody>
+        <div>
+          <h3>Season Stats</h3>
+          <TeamDefenseStatsTable stats={seasonStats} />
+        </div>
 
-                {opponentStats && (
-                    <div>
-                        <h3>
-                            <div style={{ display: "flex", alignItems: "center", gap: "2rem" }}>
-                                <p>Next Opponent</p>
-                                <OpponentImage loading="lazy" src={defense.opponent.team.logo_url} alt={defense.opponent.team.name} />
-                                <OpponentData>{defense.opponent.team.name}</OpponentData>
-                                <OpponentData>{defense.opponent.team.division}</OpponentData>
-                            </div>
-                        </h3>
-                        <TeamOffenseStatsTable stats={opponentStats} />
-                    </div>
-                )}
-            </OverlayBody>
-        </>
-    );
+        {opponentStats && (
+          <div>
+            <h3>
+              <div style={{ display: "flex", alignItems: "center", gap: "2rem" }}>
+                <p>Next Opponent</p>
+                <OpponentImage loading="lazy" src={defense.opponent.team.logo_url} alt={defense.opponent.team.name} />
+                <OpponentData>{defense.opponent.team.name}</OpponentData>
+                <OpponentData>{defense.opponent.team.division}</OpponentData>
+              </div>
+            </h3>
+            <TeamOffenseStatsTable stats={opponentStats} />
+          </div>
+        )}
+      </OverlayBody>
+    </>
+  );
 }
 

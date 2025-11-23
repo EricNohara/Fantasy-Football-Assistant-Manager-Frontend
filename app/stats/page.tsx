@@ -2,7 +2,7 @@
 
 import AppNavWrapper from "../components/AppNavWrapper";
 import { useUserData } from "../context/UserDataProvider";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { ILeagueData, ILeagueDefense, IPlayerData } from "../interfaces/IUserData";
 import styled from "styled-components";
 import { usePlayersByPosition } from "../hooks/usePlayersByPosition";
@@ -12,7 +12,10 @@ import { useSearchParams } from "next/navigation";
 import Overlay from "../components/Overlay/Overlay";
 import PlayerStatsOverlay from "../components/Overlay/PlayerStatsOverlay";
 import DefenseStatsOverlay from "../components/Overlay/DefenseStatsOverlay";
-import { isSpaceRemainingForPlayerAtPosition } from "@/lib/utils/rosterSlots";
+import { FLEX_ELIGIBLE, getRosterSlotsByPosition, isSpaceRemainingForPlayerAtPosition } from "@/lib/utils/rosterSlots";
+import { PrimaryColorButton } from "../components/Buttons";
+import { createClient } from "@/lib/supabase/client";
+import { headerFont } from "../localFont";
 
 const LeagueDropdown = styled.select`
   padding: 0.5rem 1rem;
@@ -31,14 +34,70 @@ const LeagueDropdown = styled.select`
   }
 `;
 
+const SelectPlayerOverlay = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  overflow-y: auto;
+  background-color: var(--color-base-dark);
+  border-radius: var(--global-border-radius);
+`;
+
+const SelectPlayerTitle = styled.h1`
+  font-size: 2rem;
+  font-weight: bold;
+  text-align: center;
+`;
+
+const SelectPlayerSubtitle = styled.h2`
+  font-size: 1rem;
+  color: var(--color-txt-2);
+  text-align: center;
+`;
+
+const StickyHeader = styled.div`
+  position: sticky;
+  top: 0;
+  background-color: var(--color-primary);
+  z-index: 10;
+  padding: 2rem;
+`;
+
+const SearchInput = styled.input`
+  width: 100%;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--global-border-radius);
+  background-color: var(--color-base-dark-4);
+  border: none;
+  outline: none;
+  font-size: 1rem;
+  color: white;
+  margin-bottom: 1rem;
+
+  &::placeholder {
+    color: var(--color-txt-3);
+  }
+`;
+
+
 export default function StatsPage() {
-  const { userData } = useUserData();
+  const { userData, refreshUserData } = useUserData();
+  const supabase = createClient();
   const [selectedLeagueData, setSelectedLeagueData] = useState<ILeagueData | null>(null);
   const [selectedPosition, setSelectedPosition] = useState<string>("QB");
   const [showAddOverlay, setShowAddOverlay] = useState(false);
   const [showStatsOverlay, setShowStatsOverlay] = useState(false);
   const [selectedPlayer, setSelectedPlayer] = useState<IPlayerData | null>(null);
   const [selectedDefense, setSelectedDefense] = useState<ILeagueDefense | null>(null);
+  const [selectedPlayerToSwap, setSelectedPlayerToSwap] = useState<IPlayerData | null>(null);
+  const [selectedDefenseToSwap, setSelectedDefenseToSwap] = useState<ILeagueDefense | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const swapButtonRef = useRef<HTMLButtonElement | null>(null);
 
   const searchParams = useSearchParams();
   const leagueId = searchParams.get("leagueId");
@@ -105,12 +164,44 @@ export default function StatsPage() {
     </LeagueDropdown>
   );
 
-  const onDefenseAdd = (defense: ILeagueDefense) => {
+  const onDefenseAdd = async (defense: ILeagueDefense) => {
     setSelectedDefense(defense);
     setSelectedPlayer(null);
 
-    if (isSpaceRemainingForPlayerAtPosition(selectedLeagueData, selectedPosition)) {
-      alert("Player has space on their roster. Make the PUT route call here!");
+    if (selectedLeagueData?.defenses.some((d) => d.team.id === defense.team.id)) {
+      alert("Defense is already on your roster for this league");
+      return;
+    } else if (isSpaceRemainingForPlayerAtPosition(selectedLeagueData, selectedPosition)) {
+      try {
+        // get the session
+        const { data: sessionData } = await supabase.auth.getSession();
+        const accessToken = sessionData?.session?.access_token;
+        if (!accessToken) throw new Error("User not authenticated");
+
+        const payload = {
+          leagueId: selectedLeagueData?.leagueId,
+          memberId: defense.team.id,
+          isDefense: true
+        }
+
+        const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/UpdateUserLeague/member`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${accessToken}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        })
+
+        if (!res.ok) throw new Error("Failed to add defense to roster")
+        refreshUserData();
+      } catch (e) {
+        alert("Failed to add defense to roster")
+        console.error(e);
+      } finally {
+        // close the stats overlay if it is open
+        setShowStatsOverlay(false);
+      }
       return;
     }
 
@@ -125,12 +216,44 @@ export default function StatsPage() {
     setSelectedDefense(defense);
   }
 
-  const onPlayerAdd = (player: IPlayerData) => {
+  const onPlayerAdd = async (player: IPlayerData) => {
     setSelectedPlayer(player);
     setSelectedDefense(null);
 
-    if (isSpaceRemainingForPlayerAtPosition(selectedLeagueData, selectedPosition)) {
-      alert("Player has space on their roster. Make the PUT route call here!");
+    if (selectedLeagueData?.players.some((p) => p.player.id === player.player.id)) {
+      alert("Player is already on your roster for this league");
+      return;
+    } else if (isSpaceRemainingForPlayerAtPosition(selectedLeagueData, selectedPosition)) {
+      try {
+        // get the session
+        const { data: sessionData } = await supabase.auth.getSession();
+        const accessToken = sessionData?.session?.access_token;
+        if (!accessToken) throw new Error("User not authenticated");
+
+        const payload = {
+          leagueId: selectedLeagueData?.leagueId,
+          memberId: player.player.id,
+          isDefense: false
+        }
+
+        const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/UpdateUserLeague/member`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${accessToken}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        })
+
+        if (!res.ok) throw new Error("Failed to add player to roster")
+        refreshUserData();
+      } catch (e) {
+        alert("Failed to add player to roster")
+        console.error(e);
+      } finally {
+        // close the stats overlay if it is open
+        setShowStatsOverlay(false);
+      }
       return;
     }
 
@@ -145,21 +268,162 @@ export default function StatsPage() {
     setSelectedPlayer(player);
   }
 
+  const onPlayerSwapClick = async () => {
+    try {
+      // get the session
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      if (!accessToken) throw new Error("User not authenticated");
+
+      // construct payload for player/defense updates
+      const payload = {
+        leagueId: selectedLeagueData?.leagueId,
+        oldMemberId: selectedPlayerToSwap ? selectedPlayerToSwap?.player.id : selectedDefenseToSwap?.team.id,
+        oldIsDefense: selectedDefenseToSwap ? true : false,
+        newMemberId: selectedPlayer ? selectedPlayer?.player.id : selectedDefense?.team.id,
+        newIsDefense: selectedDefense ? true : false
+      };
+
+      // call the swap endpoint
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/UpdateUserLeague/member`,
+        {
+          method: "PUT",
+          headers: {
+            "Authorization": `Bearer ${accessToken}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
+
+      if (!res.ok) throw new Error("Player swap failed");
+      refreshUserData();
+    } catch (e) {
+      alert("Player swap failed")
+      console.error(e);
+    } finally {
+      // unselect the player and the player to swap
+      setShowAddOverlay(false);
+      setSelectedPlayer(null);
+      setSelectedDefense(null);
+      setSelectedPlayerToSwap(null);
+      setSelectedDefenseToSwap(null);
+    }
+  }
+
+  const filteredOffensivePlayers = offensivePlayers.filter(p =>
+    p.player && p.player.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const filteredDefenses = defenses.filter(d =>
+    d.team && d.team.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <AppNavWrapper title="LEAGUE STATS" button1={positionDropdown} button2={leagueDropdown}>
-      {isLoading ?
+      {isLoading ? (
         <LoadingMessage message="Loading players..." />
-        : selectedPosition === "DEF" ? (
-          <PlayerList players={[]} defenses={defenses} displayStartSit={false} onDefenseAdd={onDefenseAdd} onDefenseClick={onDefenseClick} />
-        ) : (
-          <PlayerList players={offensivePlayers} displayStartSit={false} onPlayerAdd={onPlayerAdd} onPlayerClick={onPlayerClick} />
-        )}
+      ) : (
+        <>
+          <SearchInput
+            placeholder={"Search players..."}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+
+          {selectedPosition === "DEF" ? (
+            <PlayerList
+              players={[]}
+              defenses={filteredDefenses}
+              displayStartSit={false}
+              onDefenseAdd={onDefenseAdd}
+              onDefenseClick={onDefenseClick}
+            />
+          ) : (
+            <PlayerList
+              players={filteredOffensivePlayers}
+              displayStartSit={false}
+              onPlayerAdd={onPlayerAdd}
+              onPlayerClick={onPlayerClick}
+            />
+          )}
+        </>
+      )}
 
       {/* overlays */}
       {showAddOverlay &&
         <Overlay isOpen={showAddOverlay} onClose={() => setShowAddOverlay(false)}>
-          {selectedPlayer && `Adding ${selectedPlayer.player.name}`}
-          {selectedDefense && `Adding ${selectedDefense.team.name}`}
+          <SelectPlayerOverlay ref={scrollContainerRef}>
+            <StickyHeader>
+              <SelectPlayerTitle className={headerFont.className}>Your roster is full</SelectPlayerTitle>
+              <SelectPlayerSubtitle className={headerFont.className}>Select a player to swap out</SelectPlayerSubtitle>
+            </StickyHeader>
+            <div style={{ padding: "2rem" }}>
+              <PlayerList
+                players={
+                  selectedPosition !== "DEF"
+                    ? selectedLeagueData?.players.filter((p) => {
+                      const pos = p.player.position;
+
+                      // Non-FLEX positions just filter normally
+                      if (!FLEX_ELIGIBLE.includes(selectedPosition)) {
+                        return pos === selectedPosition;
+                      }
+
+                      // FLEX selection: only FLEX-eligible positions
+                      if (!FLEX_ELIGIBLE.includes(pos)) return false;
+
+                      const maxPosSlots = getRosterSlotsByPosition(selectedLeagueData, pos);
+
+                      // Count how many players of this position are already picked
+                      const pickedCount = selectedLeagueData.players.filter(
+                        (pl) => pl.player.position === pos && pl.picked
+                      ).length;
+
+                      // Allow if this player exceeds normal position slots OR is the one being swapped
+                      if (pickedCount > maxPosSlots) return true;
+
+                      if (p.player.position === selectedPlayer?.player.position) return true;
+
+                      return false;
+                    }) ?? []
+                    : []
+                }
+                onPlayerClick={(player: IPlayerData) => {
+                  if (selectedPlayerToSwap && selectedPlayerToSwap.player.id === player.player.id) {
+                    setSelectedPlayerToSwap(null);
+                    return;
+                  }
+                  setSelectedPlayerToSwap(player);
+                  setTimeout(() => {
+                    swapButtonRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+                  }, 50);
+                }}
+                defenses={selectedPosition === "DEF" ? selectedLeagueData?.defenses ?? [] : []}
+                onDefenseClick={(defense: ILeagueDefense) => {
+                  if (selectedDefenseToSwap && selectedDefenseToSwap.team.id === defense.team.id) {
+                    setSelectedDefenseToSwap(null);
+                    return;
+                  }
+                  setSelectedDefenseToSwap(defense);
+                  setTimeout(() => {
+                    swapButtonRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+                  }, 50);
+                }}
+                displayStartSit={false}
+                selectable={true}
+              />
+            </div>
+            <div style={{ width: "100%", padding: "0 2rem 2rem 2rem" }}>
+              <PrimaryColorButton
+                onClick={onPlayerSwapClick}
+                ref={swapButtonRef}
+                disabled={!selectedPlayerToSwap && !selectedDefenseToSwap}
+                style={{ width: "100%" }}
+              >
+                Swap
+              </PrimaryColorButton>
+            </div>
+          </SelectPlayerOverlay>
         </Overlay>
       }
       {showStatsOverlay &&

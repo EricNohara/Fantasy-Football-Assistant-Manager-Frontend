@@ -6,7 +6,7 @@ import { PlayerPositionTag } from "../PlayerList";
 import { formatGameInfo } from "@/lib/utils/formatGameInfo";
 import PlayerSeasonStatsTable from "./PlayerSeasonStatsTable";
 import PlayerWeeklyStatsTable from "./PlayerWeeklyStatsTable";
-import { AddButton } from "../Buttons";
+import { AddButton, DeleteButton } from "../Buttons";
 
 const OverlayHeader = styled.div`
   position: relative;
@@ -70,10 +70,11 @@ const AddButtonWrapper = styled.div`
 
 interface IPlayerStatsOverlayProps {
   player: IPlayerData | null;
-  onPlayerAdd?: (player: IPlayerData) => void
+  onPlayerAdd?: (player: IPlayerData) => void;
+  onPlayerDelete?: (player: IPlayerData) => void;
 }
 
-export default function PlayerStatsOverlay({ player, onPlayerAdd }: IPlayerStatsOverlayProps) {
+export default function PlayerStatsOverlay({ player, onPlayerAdd, onPlayerDelete }: IPlayerStatsOverlayProps) {
   if (!player) return null;
 
   const seasonStats = player.seasonStats ?? {};
@@ -99,12 +100,18 @@ export default function PlayerStatsOverlay({ player, onPlayerAdd }: IPlayerStats
             <AddButton onClick={() => onPlayerAdd(player)} />
           </AddButtonWrapper>
         }
+        {
+          onPlayerDelete &&
+          <AddButtonWrapper>
+            <DeleteButton onClick={() => onPlayerDelete(player)} />
+          </AddButtonWrapper>
+        }
       </OverlayHeader>
 
       <OverlayBody>
         <div>
           <h3>Season Stats</h3>
-          <PlayerSeasonStatsTable stats={player.seasonStats} />
+          <PlayerSeasonStatsTable stats={seasonStats} />
         </div>
 
         {weeklyStats.length > 0 && (

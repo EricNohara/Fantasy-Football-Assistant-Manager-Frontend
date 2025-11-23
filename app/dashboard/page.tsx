@@ -11,6 +11,7 @@ import PlayerList from "../components/PlayerList";
 import PlayerStatsOverlay from "../components/Overlay/PlayerStatsOverlay";
 import Overlay from "../components/Overlay/Overlay";
 import DefenseStatsOverlay from "../components/Overlay/DefenseStatsOverlay";
+import { createClient } from "@/lib/supabase/client";
 
 const LeagueDropdown = styled.select`
   padding: 0.5rem 1rem;
@@ -36,11 +37,12 @@ const NoDataMessage = styled.p`
 
 export default function DashboardPage() {
     const router = useRouter();
-    const { userData } = useUserData();
+    const { userData, refreshUserData } = useUserData();
     const [selectedLeagueData, setSelectedLeagueData] = useState<ILeagueData | null>(null);
     const [showOverlay, setShowOverlay] = useState<boolean>(false);
     const [selectedPlayer, setSelectedPlayer] = useState<IPlayerData | null>(null);
     const [selectedDefense, setSelectedDefense] = useState<ILeagueDefense | null>(null);
+    const supabase = createClient();
 
     // Set default selected league on load (first one)
     useEffect(() => {
@@ -95,6 +97,72 @@ export default function DashboardPage() {
         setSelectedDefense(defense);
     }
 
+    const onPlayerDelete = async (player: IPlayerData) => {
+        try {
+            const { data: sessionData } = await supabase.auth.getSession();
+            const accessToken = sessionData?.session?.access_token;
+            if (!accessToken) throw new Error("User not authenticated");
+
+            // construct payload for player/defense updates
+            const payload = {
+                leagueId: selectedLeagueData?.leagueId,
+                memberId: player?.player.id,
+                isDefense: false
+            };
+
+            const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/UpdateUserLeague/member`,
+                {
+                    method: "DELETE",
+                    headers: {
+                        "Authorization": `Bearer ${accessToken}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+            if (!res.ok) throw new Error();
+
+            refreshUserData();
+            setShowOverlay(false);
+        } catch (e) {
+            alert("Failed to delete player from your league's roster");
+            console.error(e);
+        }
+    }
+
+    const onDefenseDelete = async (defense: ILeagueDefense) => {
+        try {
+            const { data: sessionData } = await supabase.auth.getSession();
+            const accessToken = sessionData?.session?.access_token;
+            if (!accessToken) throw new Error("User not authenticated");
+
+            // construct payload for player/defense updates
+            const payload = {
+                leagueId: selectedLeagueData?.leagueId,
+                memberId: defense.team.id,
+                isDefense: true
+            };
+
+            const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/UpdateUserLeague/member`,
+                {
+                    method: "DELETE",
+                    headers: {
+                        "Authorization": `Bearer ${accessToken}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+            if (!res.ok) throw new Error();
+
+            refreshUserData();
+            setShowOverlay(false);
+        } catch (e) {
+            alert("Failed to delete defense from your league's roster");
+            console.error(e);
+        }
+    }
+
     return (
         <AppNavWrapper title="ROSTER DASHBOARD" button1={(selectedLeagueData?.players?.length ?? 0) > 0 ? adviceButton : editButton} button2={leagueDropdown}>
             {selectedLeagueData ?
@@ -115,8 +183,8 @@ export default function DashboardPage() {
             {
                 showOverlay &&
                 <Overlay isOpen={showOverlay} onClose={() => setShowOverlay(false)}>
-                    {selectedPlayer && <PlayerStatsOverlay player={selectedPlayer} />}
-                    {selectedDefense && <DefenseStatsOverlay defense={selectedDefense} />}
+                    {selectedPlayer && <PlayerStatsOverlay player={selectedPlayer} onPlayerDelete={onPlayerDelete} />}
+                    {selectedDefense && <DefenseStatsOverlay defense={selectedDefense} onDeleteDefense={onDefenseDelete} />}
                 </Overlay>
             }
         </AppNavWrapper>
