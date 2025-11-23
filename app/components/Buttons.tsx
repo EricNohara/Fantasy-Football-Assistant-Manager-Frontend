@@ -1,7 +1,7 @@
 import React, { ReactNode, ButtonHTMLAttributes, ForwardedRef } from "react";
 import { headerFont } from "../localFont"
 import styled from "styled-components"
-import { Plus } from "lucide-react";
+import { Plus, OctagonMinus } from "lucide-react";
 
 const ButtonBase = styled.button<{ $isFullWidth?: boolean }>`
   padding: 0.5rem 1.5rem;
@@ -94,6 +94,18 @@ export function AddButton({ isFullWidth, ...props }: AddButtonProps) {
       {...props}
     >
       <Plus size={30} />
+    </PrimarySmallButton>
+  );
+}
+
+export function DeleteButton({ isFullWidth, ...props }: AddButtonProps) {
+  return (
+    <PrimarySmallButton
+      className={headerFont.className}
+      $isFullWidth={isFullWidth}
+      {...props}
+    >
+      <OctagonMinus size={30} />
     </PrimarySmallButton>
   );
 }

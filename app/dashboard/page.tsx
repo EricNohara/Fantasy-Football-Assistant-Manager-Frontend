@@ -95,6 +95,14 @@ export default function DashboardPage() {
         setSelectedDefense(defense);
     }
 
+    const onPlayerDelete = async (player: IPlayerData) => {
+
+    }
+
+    const onDefenseDelete = async (defense: ILeagueDefense) => {
+
+    }
+
     return (
         <AppNavWrapper title="ROSTER DASHBOARD" button1={(selectedLeagueData?.players?.length ?? 0) > 0 ? adviceButton : editButton} button2={leagueDropdown}>
             {selectedLeagueData ?
@@ -115,8 +123,8 @@ export default function DashboardPage() {
             {
                 showOverlay &&
                 <Overlay isOpen={showOverlay} onClose={() => setShowOverlay(false)}>
-                    {selectedPlayer && <PlayerStatsOverlay player={selectedPlayer} />}
-                    {selectedDefense && <DefenseStatsOverlay defense={selectedDefense} />}
+                    {selectedPlayer && <PlayerStatsOverlay player={selectedPlayer} onPlayerDelete={onPlayerDelete} />}
+                    {selectedDefense && <DefenseStatsOverlay defense={selectedDefense} onDeleteDefense={onDefenseDelete} />}
                 </Overlay>
             }
         </AppNavWrapper>
