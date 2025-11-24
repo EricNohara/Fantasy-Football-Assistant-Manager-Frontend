@@ -12,23 +12,7 @@ import PlayerStatsOverlay from "../components/Overlay/PlayerStatsOverlay";
 import Overlay from "../components/Overlay/Overlay";
 import DefenseStatsOverlay from "../components/Overlay/DefenseStatsOverlay";
 import { createClient } from "@/lib/supabase/client";
-
-const LeagueDropdown = styled.select`
-  padding: 0.5rem 1rem;
-  border-radius: var(--global-border-radius);
-  background-color: var(--color-base-dark-4);
-  color: white;
-  font-size: 1rem;
-  font-weight: bold;
-  cursor: pointer;
-  outline: none;
-  transition: border-color 0.2s ease, background-color 0.2s ease;
-
-  option {
-    background-color: var(--color-base-dark-3);
-    color: white;
-  }
-`;
+import GenericDropdown from "../components/GenericDropdown";
 
 const NoDataMessage = styled.p`
     font-style: italic;
@@ -76,13 +60,13 @@ export default function DashboardPage() {
 
     // Secondary "button" as dropdown
     const leagueDropdown = (
-        <LeagueDropdown value={selectedLeagueData?.leagueId ?? ""} onChange={handleLeagueChange}>
-            {userData?.leagues.map(league => (
-                <option key={league.leagueId} value={league.leagueId}>
-                    {league.leagueName}
-                </option>
-            ))}
-        </LeagueDropdown>
+        <GenericDropdown
+            items={userData?.leagues ?? []}
+            selected={selectedLeagueData}
+            getKey={(l) => l.leagueId}
+            getLabel={(l) => l.leagueName}
+            onChange={(league) => setSelectedLeagueData(league)}
+        />
     );
 
     const onPlayerClick = (player: IPlayerData) => {

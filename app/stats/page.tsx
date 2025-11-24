@@ -16,23 +16,8 @@ import { FLEX_ELIGIBLE, getRosterSlotsByPosition, isSpaceRemainingForPlayerAtPos
 import { PrimaryColorButton } from "../components/Buttons";
 import { createClient } from "@/lib/supabase/client";
 import { headerFont } from "../localFont";
-
-const LeagueDropdown = styled.select`
-  padding: 0.5rem 1rem;
-  border-radius: var(--global-border-radius);
-  background-color: var(--color-base-dark-4);
-  color: white;
-  font-size: 1rem;
-  font-weight: bold;
-  cursor: pointer;
-  outline: none;
-  transition: border-color 0.2s ease, background-color 0.2s ease;
-
-  option {
-    background-color: var(--color-base-dark-3);
-    color: white;
-  }
-`;
+import GenericDropdown from "../components/GenericDropdown";
+import SearchBar from "../components/SearchBar";
 
 const SelectPlayerOverlay = styled.div`
   display: flex;
@@ -65,23 +50,6 @@ const StickyHeader = styled.div`
   z-index: 10;
   padding: 2rem;
 `;
-
-const SearchInput = styled.input`
-  width: 100%;
-  padding: 0.75rem 1.5rem;
-  border-radius: var(--global-border-radius);
-  background-color: var(--color-base-dark-4);
-  border: none;
-  outline: none;
-  font-size: 1rem;
-  color: white;
-  margin-bottom: 1rem;
-
-  &::placeholder {
-    color: var(--color-txt-3);
-  }
-`;
-
 
 export default function StatsPage() {
   const { userData, refreshUserData } = useUserData();
@@ -142,26 +110,23 @@ export default function StatsPage() {
   };
 
   const leagueDropdown = (
-    <LeagueDropdown
-      value={selectedLeagueData?.leagueId ?? ""}
-      onChange={handleLeagueChange}
-    >
-      {userData?.leagues.map((league) => (
-        <option key={league.leagueId} value={league.leagueId}>
-          {league.leagueName}
-        </option>
-      ))}
-    </LeagueDropdown>
+    <GenericDropdown
+      items={userData?.leagues ?? []}
+      selected={selectedLeagueData}
+      getKey={(l) => l.leagueId}
+      getLabel={(l) => l.leagueName}
+      onChange={(league) => setSelectedLeagueData(league)}
+    />
   );
 
   const positionDropdown = (
-    <LeagueDropdown value={selectedPosition} onChange={(e) => setSelectedPosition(e.target.value)}>
-      {POSITIONS.map((pos) => (
-        <option key={pos} value={pos}>
-          {pos}
-        </option>
-      ))}
-    </LeagueDropdown>
+    <GenericDropdown
+      items={POSITIONS}
+      selected={selectedPosition}
+      getKey={(pos) => pos}
+      getLabel={(pos) => pos}
+      onChange={(pos) => setSelectedPosition(pos)}
+    />
   );
 
   const onDefenseAdd = async (defense: ILeagueDefense) => {
@@ -324,10 +289,11 @@ export default function StatsPage() {
         <LoadingMessage message="Loading players..." />
       ) : (
         <>
-          <SearchInput
-            placeholder={"Search players..."}
+          <SearchBar
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search players..."
+            onChange={setSearchQuery}
+            sticky
           />
 
           {selectedPosition === "DEF" ? (
