@@ -11,14 +11,13 @@ import PurchaseTab from "./PurchaseTab";
 const TabContent = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-  max-width: 600px;
+  gap: 0.5rem;
 `;
 
 const ButtonContainer = styled.div`
   display: flex;
   gap: 1rem;
-  margin-top: 0.5rem;
+  margin-top: 1rem;
 `;
 
 interface IGeneralTabProps {
@@ -45,22 +44,11 @@ export default function GeneralTab({
   const [openPurchase, setOpenPurchase] = useState(false);
   const [purchaseKey, setPurchaseKey] = useState(0); // To reset purchase tab
 
-  const handlePurchase = (packageId: string) => {
-    // TODO: Implement actual purchase logic
-    console.log("Purchasing package:", packageId);
-    alert(`Purchase initiated for package: ${packageId}`);
-    setOpenPurchase(false);
-  };
-
   const handleClosePurchase = () => {
     setOpenPurchase(false);
     setTimeout(() => {
       setPurchaseKey(prev => prev + 1);
     }, 300); // Small delay for smooth transition
-  };
-
-  const handleReset = () => {
-    console.log("Payment process reset");
   };
 
   const handleChangePassword = () => {

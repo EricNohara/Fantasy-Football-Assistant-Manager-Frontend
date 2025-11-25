@@ -19,7 +19,7 @@ const Tab = styled.button<{ $isActive: boolean }>`
   background: none;
   border: none;
   color: ${({ $isActive }) => ($isActive ? "var(--color-primary)" : "white")};
-  font-size: 1rem;
+  font-size: 1.5rem;
   font-weight: bold;
   padding: 1rem 0;
   cursor: pointer;
