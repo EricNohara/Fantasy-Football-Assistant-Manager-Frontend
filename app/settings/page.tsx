@@ -71,10 +71,7 @@ export default function SettingsPage() {
 
     const handleSaveChanges = async () => {
         try {
-            const {
-                data: { session },
-            } = await supabase.auth.getSession();
-
+            const { data: { session } } = await supabase.auth.getSession();
             if (!session?.access_token) {
                 alert("You must be logged in to save changes.");
                 return;
@@ -82,6 +79,13 @@ export default function SettingsPage() {
 
             // Save user info
             if (userInfo) {
+                const payload = {
+                    fullname: userInfo.fullname,
+                    phoneNumber: userInfo.phone_number,
+                    allowEmails: userInfo.allow_emails,
+                    tokensLeft: userInfo.tokens_left
+                }
+
                 const userRes = await fetch(
                     `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/Users`,
                     {
@@ -90,7 +94,7 @@ export default function SettingsPage() {
                             Authorization: `Bearer ${session.access_token}`,
                             "Content-Type": "application/json",
                         },
-                        body: JSON.stringify(userInfo),
+                        body: JSON.stringify(payload),
                     }
                 );
                 if (!userRes.ok) throw new Error("Failed to update user info");
@@ -98,15 +102,19 @@ export default function SettingsPage() {
 
             // Save roster settings
             if (rosterSettings) {
+                const payload = {
+                    league_id: selectedLeagueData?.leagueId,
+                    ...rosterSettings
+                }
                 const rosterRes = await fetch(
-                    `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/RosterSettings/${rosterSettings.id}`,
+                    `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/UpdateUserLeague/rosterSettings`,
                     {
                         method: "PUT",
                         headers: {
                             Authorization: `Bearer ${session.access_token}`,
                             "Content-Type": "application/json",
                         },
-                        body: JSON.stringify(rosterSettings),
+                        body: JSON.stringify(payload),
                     }
                 );
                 if (!rosterRes.ok)
@@ -115,15 +123,19 @@ export default function SettingsPage() {
 
             // Save scoring settings
             if (scoringSettings) {
+                const payload = {
+                    league_id: selectedLeagueData?.leagueId,
+                    ...scoringSettings
+                }
                 const scoringRes = await fetch(
-                    `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/ScoringSettings/${scoringSettings.id}`,
+                    `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/UpdateUserLeague/scoringSettings`,
                     {
                         method: "PUT",
                         headers: {
                             Authorization: `Bearer ${session.access_token}`,
                             "Content-Type": "application/json",
                         },
-                        body: JSON.stringify(scoringSettings),
+                        body: JSON.stringify(payload),
                     }
                 );
                 if (!scoringRes.ok)
