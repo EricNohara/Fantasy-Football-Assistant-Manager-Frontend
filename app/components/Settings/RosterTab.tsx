@@ -7,15 +7,14 @@ import { IRosterSettings } from "@/app/interfaces/IUserData";
 const TabContent = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  max-width: 500px;
+  gap: 0.5rem;
 `;
 
 const RosterItem = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.75rem 0;
+  padding-bottom: 0.5rem;
   border-bottom: 1px solid var(--color-base-dark-3);
 
   &:last-child {
@@ -26,6 +25,7 @@ const RosterItem = styled.div`
 const PositionLabel = styled.span`
   color: white;
   font-size: 1rem;
+  font-weight: bold;
 `;
 
 const CountInput = styled.input`

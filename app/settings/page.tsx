@@ -6,58 +6,93 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../context/AuthProvider";
 import { useState, useEffect } from "react";
-import { IUserInfo, IRosterSettings, IScoringSettings, ILeagueData } from "../interfaces/IUserData";
+import {
+    IUserInfo,
+    IRosterSettings,
+    IScoringSettings,
+    ILeagueData,
+} from "../interfaces/IUserData";
 import GeneralTab from "../components/Settings/GeneralTab";
 import RosterTab from "../components/Settings/RosterTab";
 import ScoringTab from "../components/Settings/ScoringTab";
 import SettingsTabs from "../components/Settings/SettingsTabs";
 import { useUserData } from "../context/UserDataProvider";
 import GenericDropdown from "../components/GenericDropdown";
+import styled from "styled-components";
+
+const PageContainer = styled.div`
+padding-left: 1.5rem;
+padding-right: 1.5rem;
+  color: white;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+`;
+
+const ContentCard = styled.div`
+  background: var(--color-base-dark-2);
+  padding: 2rem;
+  border-radius: var(--global-border-radius);
+  border: 1px solid var(--color-base-dark-4);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+`;
 
 export default function SettingsPage() {
     const supabase = createClient();
     const router = useRouter();
     const { setIsLoggedIn } = useAuth();
     const { userData, isLoading, refreshUserData } = useUserData();
-    const [activeTab, setActiveTab] = useState<"general" | "roster" | "scoring">("general");
+
+    const [activeTab, setActiveTab] = useState<
+        "general" | "roster" | "scoring"
+    >("general");
+
     const [userInfo, setUserInfo] = useState<IUserInfo | null>(null);
-    const [rosterSettings, setRosterSettings] = useState<IRosterSettings | null>(null);
-    const [scoringSettings, setScoringSettings] = useState<IScoringSettings | null>(null);
-    const [selectedLeagueData, setSelectedLeagueData] = useState<ILeagueData | null>(null);
+    const [rosterSettings, setRosterSettings] =
+        useState<IRosterSettings | null>(null);
+    const [scoringSettings, setScoringSettings] =
+        useState<IScoringSettings | null>(null);
+
+    const [selectedLeagueData, setSelectedLeagueData] =
+        useState<ILeagueData | null>(null);
 
     useEffect(() => {
-        if (!isLoading) {
-            if (userData?.userInfo && userData.userInfo.email) {
-                // Use real data if available
-                setUserInfo(userData.userInfo);
-                if (userData.leagues && userData.leagues.length > 0) {
-                    setRosterSettings(userData.leagues[0].rosterSettings);
-                    setScoringSettings(userData.leagues[0].scoringSettings);
-                }
+        if (!isLoading && userData?.userInfo) {
+            setUserInfo(userData.userInfo);
+
+            if (userData.leagues && userData.leagues.length > 0) {
+                setSelectedLeagueData(userData.leagues[0]);
+                setRosterSettings(userData.leagues[0].rosterSettings);
+                setScoringSettings(userData.leagues[0].scoringSettings);
             }
         }
     }, [userData]);
 
     const handleSaveChanges = async () => {
         try {
-            const { data: { session } } = await supabase.auth.getSession();
+            const {
+                data: { session },
+            } = await supabase.auth.getSession();
+
             if (!session?.access_token) {
                 alert("You must be logged in to save changes.");
                 return;
             }
 
-            //routes are not defined in backend yet. 
-            // Save userInfo
+            // Save user info
             if (userInfo) {
-                const userRes = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/Users`, {
-                    method: "PUT",
-                    headers: {
-                        "Authorization": `Bearer ${session.access_token}`,
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify(userInfo)
-                });
-
+                const userRes = await fetch(
+                    `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/Users`,
+                    {
+                        method: "PUT",
+                        headers: {
+                            Authorization: `Bearer ${session.access_token}`,
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify(userInfo),
+                    }
+                );
                 if (!userRes.ok) throw new Error("Failed to update user info");
             }
 
@@ -68,13 +103,14 @@ export default function SettingsPage() {
                     {
                         method: "PUT",
                         headers: {
-                            "Authorization": `Bearer ${session.access_token}`,
-                            "Content-Type": "application/json"
+                            Authorization: `Bearer ${session.access_token}`,
+                            "Content-Type": "application/json",
                         },
-                        body: JSON.stringify(rosterSettings)
+                        body: JSON.stringify(rosterSettings),
                     }
                 );
-                if (!rosterRes.ok) throw new Error("Failed to update roster settings");
+                if (!rosterRes.ok)
+                    throw new Error("Failed to update roster settings");
             }
 
             // Save scoring settings
@@ -84,68 +120,72 @@ export default function SettingsPage() {
                     {
                         method: "PUT",
                         headers: {
-                            "Authorization": `Bearer ${session.access_token}`,
-                            "Content-Type": "application/json"
+                            Authorization: `Bearer ${session.access_token}`,
+                            "Content-Type": "application/json",
                         },
-                        body: JSON.stringify(scoringSettings)
+                        body: JSON.stringify(scoringSettings),
                     }
                 );
-                if (!scoringRes.ok) throw new Error("Failed to update scoring settings");
+                if (!scoringRes.ok)
+                    throw new Error("Failed to update scoring settings");
             }
 
             alert("Settings saved successfully!");
-            await refreshUserData(); // Refresh the context data
+            await refreshUserData();
         } catch (error: any) {
             alert(`Error saving settings: ${error.message || error}`);
         }
     };
 
     const handleDeleteUser = async () => {
-        if (!confirm("Are you sure you want to delete your account? This cannot be undone.")) return;
+        if (!confirm("Are you sure? This cannot be undone.")) return;
 
         try {
-            // get session
-            const { data: { session } } = await supabase.auth.getSession();
+            const {
+                data: { session },
+            } = await supabase.auth.getSession();
+
             if (!session?.access_token) {
-                alert("You must be logged in to delete your account.");
+                alert("Not logged in.");
                 return;
             }
 
-            // call backend DELETE route
-            const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/Users`, {
-                method: "DELETE",
-                headers: {
-                    "Authorization": `Bearer ${session.access_token}`
+            const res = await fetch(
+                `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/Users`,
+                {
+                    method: "DELETE",
+                    headers: {
+                        Authorization: `Bearer ${session.access_token}`,
+                    },
                 }
-            });
+            );
 
-            if (!res.ok) {
-                const text = await res.text();
-                throw new Error(text || "Failed to delete account");
-            }
+            if (!res.ok) throw new Error(await res.text());
 
-            // delete auth user
-            const deleteAuthRes = await fetch("/api/deleteUser", { method: "DELETE" });
-
-            if (!deleteAuthRes.ok) {
-                const data = await deleteAuthRes.json();
-                throw new Error(data.error || "Failed to delete account");
-            }
+            await fetch("/api/deleteUser", { method: "DELETE" });
 
             alert("Account deleted successfully");
 
-            // log out the user locally and redirect to landing page
             await supabase.auth.signOut();
             setIsLoggedIn(false);
             router.push("/");
         } catch (error: any) {
-            alert(`Error deleting account: ${error.message || error}`);
+            alert(`Error: ${error.message}`);
         }
+    };
 
-    }
 
-    const button = <PrimaryColorButton onClick={handleSaveChanges}>Save Changes</PrimaryColorButton>;
-    const deleteUserButton = <SecondaryColorButton onClick={handleDeleteUser}>Delete User</SecondaryColorButton>;
+    const saveButton = (
+        <PrimaryColorButton onClick={handleSaveChanges}>
+            Save Changes
+        </PrimaryColorButton>
+    );
+
+    const deleteUserButton = (
+        <SecondaryColorButton onClick={handleDeleteUser}>
+            Delete User
+        </SecondaryColorButton>
+    );
 
     const leagueDropdown = (
         <GenericDropdown
@@ -153,53 +193,74 @@ export default function SettingsPage() {
             selected={selectedLeagueData}
             getKey={(l) => l.leagueId}
             getLabel={(l) => l.leagueName}
-            onChange={(league) => setSelectedLeagueData(league)}
+            onChange={(l) => {
+                setSelectedLeagueData(l);
+                setRosterSettings(l.rosterSettings);
+                setScoringSettings(l.scoringSettings);
+            }}
         />
     );
 
     if (isLoading) {
         return (
-            <AppNavWrapper title="SETTINGS" button2={button} button1={deleteUserButton}>
-                <div>Loading settings...</div>
+            <AppNavWrapper
+                title="SETTINGS"
+                button1={saveButton}
+                button2={deleteUserButton}
+            >
+                <PageContainer>Loading settings...</PageContainer>
             </AppNavWrapper>
         );
     }
 
     return (
-        <AppNavWrapper title="SETTINGS" button2={activeTab === "general" ? deleteUserButton : leagueDropdown} button1={button}>
-            <SettingsTabs activeTab={activeTab} onTabChange={setActiveTab} />
+        <AppNavWrapper
+            title="SETTINGS"
+            button1={saveButton}
+            button2={activeTab === "general" ? deleteUserButton : leagueDropdown}
+        >
+            <PageContainer>
+                <SettingsTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
-            {activeTab === "general" && userInfo && (
-                <GeneralTab
-                    email={userInfo.email}
-                    phoneNumber={userInfo.phone_number || ""}
-                    fullname={userInfo.fullname || ""}
-                    allowEmails={userInfo.allow_emails}
-                    onEmailChange={(value) => setUserInfo({ ...userInfo, email: value })}
-                    onPhoneNumberChange={(value) => setUserInfo({ ...userInfo, phone_number: value })}
-                    onFullnameChange={(value) => setUserInfo({ ...userInfo, fullname: value })}
-                    onAllowEmailsChange={(value) => setUserInfo({ ...userInfo, allow_emails: value })}
-                />
-            )}
+                <ContentCard>
+                    {activeTab === "general" && userInfo && (
+                        <GeneralTab
+                            email={userInfo.email}
+                            phoneNumber={userInfo.phone_number || ""}
+                            fullname={userInfo.fullname || ""}
+                            allowEmails={userInfo.allow_emails}
+                            onEmailChange={(v) => setUserInfo({ ...userInfo, email: v })}
+                            onPhoneNumberChange={(v) =>
+                                setUserInfo({ ...userInfo, phone_number: v })
+                            }
+                            onFullnameChange={(v) =>
+                                setUserInfo({ ...userInfo, fullname: v })
+                            }
+                            onAllowEmailsChange={(v) =>
+                                setUserInfo({ ...userInfo, allow_emails: v })
+                            }
+                        />
+                    )}
 
-            {activeTab === "roster" && rosterSettings && (
-                <RosterTab
-                    rosterSettings={rosterSettings}
-                    onRosterChange={(field, newCount) =>
-                        setRosterSettings({ ...rosterSettings, [field]: newCount })
-                    }
-                />
-            )}
+                    {activeTab === "roster" && rosterSettings && (
+                        <RosterTab
+                            rosterSettings={rosterSettings}
+                            onRosterChange={(field, value) =>
+                                setRosterSettings({ ...rosterSettings, [field]: value })
+                            }
+                        />
+                    )}
 
-            {activeTab === "scoring" && scoringSettings && (
-                <ScoringTab
-                    scoringSettings={scoringSettings}
-                    onScoringChange={(field, newValue) =>
-                        setScoringSettings({ ...scoringSettings, [field]: newValue })
-                    }
-                />
-            )}
-
+                    {activeTab === "scoring" && scoringSettings && (
+                        <ScoringTab
+                            scoringSettings={scoringSettings}
+                            onScoringChange={(field, value) =>
+                                setScoringSettings({ ...scoringSettings, [field]: value })
+                            }
+                        />
+                    )}
+                </ContentCard>
+            </PageContainer>
         </AppNavWrapper>
-    )
+    );
 }
