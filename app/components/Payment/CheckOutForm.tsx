@@ -18,7 +18,6 @@ import { PrimaryColorButton } from "@/app/components/Buttons";
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
 const CheckoutContainer = styled.div`
-  padding: 2rem;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -27,8 +26,9 @@ const CheckoutContainer = styled.div`
 
 const Title = styled.h2`
   font-size: 2rem;
-  color: var(--color-primary);
-  margin: 0 0 0.5rem 0;
+  font-weight: bold;
+  color: white;
+  margin-bottom: 0.5rem;
 `;
 
 const Description = styled.p`
@@ -63,11 +63,11 @@ const CardElementContainer = styled.div`
 const Message = styled.div<{ $isError?: boolean }>`
   padding: 1rem;
   border-radius: var(--global-border-radius);
-  background-color: ${({ $isError }) => 
+  background-color: ${({ $isError }) =>
     $isError ? 'rgba(207, 83, 83, 0.1)' : 'rgba(42, 183, 79, 0.1)'};
-  border: 2px solid ${({ $isError }) => 
+  border: 2px solid ${({ $isError }) =>
     $isError ? 'var(--color-red)' : 'var(--color-green)'};
-  color: ${({ $isError }) => 
+  color: ${({ $isError }) =>
     $isError ? 'var(--color-red)' : 'var(--color-green)'};
   text-align: center;
   font-weight: 500;
@@ -222,20 +222,20 @@ export default function CheckoutForm({ packageData, onBack }: CheckoutFormProps)
 
     try {
       const res = await fetch(`http://${backendUrl}/api/stripe/create-payment-intent`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        packageId: packageData.id,
-        amount: packageData.price * 100,
-        tokens: packageData.tokens,
-        packageName: packageData.name,
-      }),
-    });
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          packageId: packageData.id,
+          amount: packageData.price * 100,
+          tokens: packageData.tokens,
+          packageName: packageData.name,
+        }),
+      });
 
-    const { clientSecret } = await res.json();
+      const { clientSecret } = await res.json();
 
       //Pull entered info from the existing card element.
       const card = elements?.getElement(CardElement);
@@ -315,16 +315,16 @@ export default function CheckoutForm({ packageData, onBack }: CheckoutFormProps)
           <SummaryValue>${packageData.price}</SummaryValue>
         </SummaryRow>
       </PackageSummary>
-      
+
       <FormContainer id="payment-form" onSubmit={handleSubmit}>
         <CardElementContainer>
           <CardElement id="card-element" options={cardElementOptions} />
         </CardElementContainer>
 
         {message && <Message $isError={isError}>{message}</Message>}
-        
+
         <ButtonContainer>
-          <PrimaryColorButton 
+          <PrimaryColorButton
             type="button"
             onClick={onBack}
             disabled={loading}
@@ -332,7 +332,7 @@ export default function CheckoutForm({ packageData, onBack }: CheckoutFormProps)
           >
             Back
           </PrimaryColorButton>
-          <PrimaryColorButton 
+          <PrimaryColorButton
             type="submit"
             disabled={loading || !stripe || !elements}
             style={{ flex: 2 }}

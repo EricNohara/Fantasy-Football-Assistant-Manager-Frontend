@@ -6,12 +6,13 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../context/AuthProvider";
 import { useState, useEffect } from "react";
-import { IUserInfo, IRosterSettings, IScoringSettings } from "../interfaces/IUserData";
+import { IUserInfo, IRosterSettings, IScoringSettings, ILeagueData } from "../interfaces/IUserData";
 import GeneralTab from "../components/Settings/GeneralTab";
 import RosterTab from "../components/Settings/RosterTab";
 import ScoringTab from "../components/Settings/ScoringTab";
 import SettingsTabs from "../components/Settings/SettingsTabs";
 import { useUserData } from "../context/UserDataProvider";
+import GenericDropdown from "../components/GenericDropdown";
 
 export default function SettingsPage() {
     const supabase = createClient();
@@ -22,52 +23,20 @@ export default function SettingsPage() {
     const [userInfo, setUserInfo] = useState<IUserInfo | null>(null);
     const [rosterSettings, setRosterSettings] = useState<IRosterSettings | null>(null);
     const [scoringSettings, setScoringSettings] = useState<IScoringSettings | null>(null);
+    const [selectedLeagueData, setSelectedLeagueData] = useState<ILeagueData | null>(null);
 
     useEffect(() => {
-        // TODO: Uncomment this code when backend is ready to return real data
-        // if (!isLoading) {
-        //     if (userData?.userInfo && userData.userInfo.email) {
-        //         // Use real data if available
-        //         setUserInfo(userData.userInfo);
-        //         if (userData.leagues && userData.leagues.length > 0) {
-        //             setRosterSettings(userData.leagues[0].rosterSettings);
-        //             setScoringSettings(userData.leagues[0].scoringSettings);
-        //         }
-        //     }
-        // }
-
-        // TEMPORARY: Using dummy data until backend returns real data
-        setUserInfo({
-            id: "dummy-user-id",
-            email: "john.doe@example.com",
-            tokens_left: 100,
-            allow_emails: true,
-            fullname: "John Doe",
-            phone_number: "636-337-4833"
-        });
-        
-        setRosterSettings({
-            id: "dummy-roster-id",
-            qb_count: 1,
-            rb_count: 2,
-            wr_count: 2,
-            te_count: 1,
-            k_count: 1,
-            flex_count: 1,
-            def_count: 1,
-            bench_count: 6,
-            ir_count: 2
-        });
-        
-        setScoringSettings({
-            id: "dummy-scoring-id",
-            points_per_td: 6,
-            points_per_reception: 1,
-            points_per_rushing_yard: 0.1,
-            points_per_reception_yard: 0.1,
-            points_per_passing_yard: 0.04
-        });
-    }, []);
+        if (!isLoading) {
+            if (userData?.userInfo && userData.userInfo.email) {
+                // Use real data if available
+                setUserInfo(userData.userInfo);
+                if (userData.leagues && userData.leagues.length > 0) {
+                    setRosterSettings(userData.leagues[0].rosterSettings);
+                    setScoringSettings(userData.leagues[0].scoringSettings);
+                }
+            }
+        }
+    }, [userData]);
 
     const handleSaveChanges = async () => {
         try {
@@ -178,6 +147,16 @@ export default function SettingsPage() {
     const button = <PrimaryColorButton onClick={handleSaveChanges}>Save Changes</PrimaryColorButton>;
     const deleteUserButton = <SecondaryColorButton onClick={handleDeleteUser}>Delete User</SecondaryColorButton>;
 
+    const leagueDropdown = (
+        <GenericDropdown
+            items={userData?.leagues ?? []}
+            selected={selectedLeagueData}
+            getKey={(l) => l.leagueId}
+            getLabel={(l) => l.leagueName}
+            onChange={(league) => setSelectedLeagueData(league)}
+        />
+    );
+
     if (isLoading) {
         return (
             <AppNavWrapper title="SETTINGS" button2={button} button1={deleteUserButton}>
@@ -187,7 +166,7 @@ export default function SettingsPage() {
     }
 
     return (
-        <AppNavWrapper title="SETTINGS" button2={button} button1={deleteUserButton}>
+        <AppNavWrapper title="SETTINGS" button2={activeTab === "general" ? deleteUserButton : leagueDropdown} button1={button}>
             <SettingsTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
             {activeTab === "general" && userInfo && (
@@ -196,31 +175,31 @@ export default function SettingsPage() {
                     phoneNumber={userInfo.phone_number || ""}
                     fullname={userInfo.fullname || ""}
                     allowEmails={userInfo.allow_emails}
-                    onEmailChange={(value) => setUserInfo({...userInfo, email: value})}
-                    onPhoneNumberChange={(value) => setUserInfo({...userInfo, phone_number: value})}
-                    onFullnameChange={(value) => setUserInfo({...userInfo, fullname: value})}
-                    onAllowEmailsChange={(value) => setUserInfo({...userInfo, allow_emails: value})}
+                    onEmailChange={(value) => setUserInfo({ ...userInfo, email: value })}
+                    onPhoneNumberChange={(value) => setUserInfo({ ...userInfo, phone_number: value })}
+                    onFullnameChange={(value) => setUserInfo({ ...userInfo, fullname: value })}
+                    onAllowEmailsChange={(value) => setUserInfo({ ...userInfo, allow_emails: value })}
                 />
-                )}
+            )}
 
-                {activeTab === "roster" && rosterSettings && (
+            {activeTab === "roster" && rosterSettings && (
                 <RosterTab
                     rosterSettings={rosterSettings}
-                    onRosterChange={(field, newCount) => 
-                    setRosterSettings({...rosterSettings, [field]: newCount})
+                    onRosterChange={(field, newCount) =>
+                        setRosterSettings({ ...rosterSettings, [field]: newCount })
                     }
                 />
-                )}
+            )}
 
-                {activeTab === "scoring" && scoringSettings && (
+            {activeTab === "scoring" && scoringSettings && (
                 <ScoringTab
                     scoringSettings={scoringSettings}
-                    onScoringChange={(field, newValue) => 
-                    setScoringSettings({...scoringSettings, [field]: newValue})
+                    onScoringChange={(field, newValue) =>
+                        setScoringSettings({ ...scoringSettings, [field]: newValue })
                     }
                 />
-                )}
-            
+            )}
+
         </AppNavWrapper>
     )
 }
