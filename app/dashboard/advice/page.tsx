@@ -15,6 +15,7 @@ import styled from "styled-components";
 import Overlay from "@/app/components/Overlay/Overlay";
 import { PlayerPositionTag } from "@/app/components/PlayerList";
 import { formatGameInfo, formatTeamGameInfo } from "@/lib/utils/formatGameInfo";
+import { authFetch } from "@/lib/supabase/authFetch";
 
 const StartSitLabel = styled.h2`
     font-size: 1.5rem;
@@ -89,7 +90,7 @@ export default function DashboardPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const leagueId = searchParams.get("leagueId");
-    const supabase = createClient();
+    const regenerate = searchParams.get("regenerate") === "true";
 
     const { userData } = useUserData();
     const adviceCalledRef = useRef(false);
@@ -120,24 +121,21 @@ export default function DashboardPage() {
         const userId = userData.userInfo.id;
         const playerIds = league.players.map(p => p.player.id);
 
-        const cached = getCachedAdvice(userId, leagueId, playerIds);
-        if (cached) {
-            setAdvice(cached);
-            setLoading(false);
-            return;
+        if (!regenerate) {
+            const cached = getCachedAdvice(userId, leagueId, playerIds);
+            if (cached) {
+                setAdvice(cached);
+                setLoading(false);
+                return;
+            }
         }
 
         adviceCalledRef.current = true;
 
         const generateAdvice = async () => {
             try {
-                const { data: sessionData } = await supabase.auth.getSession();
-                const accessToken = sessionData?.session?.access_token;
-                if (!accessToken) throw new Error("User not authenticated")
-
-                const res = await fetch(
+                const res = await authFetch(
                     `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/RosterPrediction?leagueId=${leagueId}`,
-                    { headers: { Authorization: `Bearer ${accessToken}` } }
                 );
 
                 const json = await res.json();
@@ -153,7 +151,7 @@ export default function DashboardPage() {
         };
 
         generateAdvice();
-    }, [leagueId, userData]);
+    }, [leagueId, userData, regenerate]);
 
     const button = <PrimaryColorButton onClick={() => router.push("/dashboard")}>Back</PrimaryColorButton>;
 

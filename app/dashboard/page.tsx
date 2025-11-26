@@ -11,8 +11,10 @@ import PlayerList from "../components/PlayerList";
 import PlayerStatsOverlay from "../components/Overlay/PlayerStatsOverlay";
 import Overlay from "../components/Overlay/Overlay";
 import DefenseStatsOverlay from "../components/Overlay/DefenseStatsOverlay";
-import { createClient } from "@/lib/supabase/client";
 import GenericDropdown from "../components/GenericDropdown";
+import { authFetch } from "@/lib/supabase/authFetch";
+import { getCachedAdvice } from "@/lib/utils/cachedAdvice";
+import ConfirmAdviceModal from "../components/ConfirmAdviceModal";
 
 const NoDataMessage = styled.p`
     font-style: italic;
@@ -26,7 +28,8 @@ export default function DashboardPage() {
     const [showOverlay, setShowOverlay] = useState<boolean>(false);
     const [selectedPlayer, setSelectedPlayer] = useState<IPlayerData | null>(null);
     const [selectedDefense, setSelectedDefense] = useState<ILeagueDefense | null>(null);
-    const supabase = createClient();
+    const [showAdviceModal, setShowAdviceModal] = useState(false);
+    const [cachedAdviceData, setCachedAdviceData] = useState<any>(null);
 
     // Set default selected league on load (first one)
     useEffect(() => {
@@ -41,19 +44,55 @@ export default function DashboardPage() {
         setSelectedLeagueData(league);
     };
 
+    const handleUseCached = () => {
+        setShowAdviceModal(false);
+        router.push(`/dashboard/advice?leagueId=${selectedLeagueData?.leagueId}&regenerate=false`);
+    };
+
+    const handleRegenerate = () => {
+        setShowAdviceModal(false);
+        router.push(`/dashboard/advice?leagueId=${selectedLeagueData?.leagueId}&regenerate=true`);
+    };
+
     const handleClickAdvice = () => {
         const tokensRemaining = userData?.userInfo.tokens_left ?? 0;
-        const name = userData?.userInfo.fullname ? userData?.userInfo.fullname : "";
+        const name = userData?.userInfo.fullname ?? "";
+        const league = selectedLeagueData;
 
-        if (tokensRemaining <= 0) {
-            alert(`User ${name} has ${tokensRemaining} tokens remaining. Purchase more tokens to continue.`);
+        if (!league) {
+            alert("No league selected.");
             return;
         }
 
-        alert(`User ${name}, would you like to spend one token to generate ai advice? Operation cannot be reversed. You will have ${tokensRemaining - 1} tokens remaining after this operation.`)
+        const userId = userData?.userInfo.id;
+        const playerIds = league.players.map(p => p.player.id);
 
-        router.push(`/dashboard/advice?leagueId=${selectedLeagueData?.leagueId}`)
-    }
+        // check cache
+        const cached = getCachedAdvice(userId ?? "", league.leagueId, playerIds);
+
+        if (cached) {
+            setCachedAdviceData(cached);
+            setShowAdviceModal(true);
+            return;
+        }
+
+        // otherwise must confirm token spend
+        if (tokensRemaining <= 0) {
+            alert(`User ${name} has ${tokensRemaining} tokens remaining. Purchase more tokens.`);
+            return;
+        }
+
+        const confirmSpend = window.confirm(
+            `Generate new AI advice for ${league.leagueName}? This costs 1 token.\n\n` +
+            `You currently have ${tokensRemaining} tokens.\n` +
+            `You will have ${tokensRemaining - 1} remaining.`
+        );
+
+        if (!confirmSpend) return;
+
+        router.push(`/dashboard/advice?leagueId=${league.leagueId}`);
+    };
+
 
     const editButton = <PrimaryColorButton onClick={() => router.push(`/stats?leagueId=${selectedLeagueData?.leagueId}`)}>Edit Roster</PrimaryColorButton>;
     const adviceButton = <PrimaryColorButton onClick={handleClickAdvice}>Generate Advice</PrimaryColorButton>;
@@ -83,10 +122,6 @@ export default function DashboardPage() {
 
     const onPlayerDelete = async (player: IPlayerData) => {
         try {
-            const { data: sessionData } = await supabase.auth.getSession();
-            const accessToken = sessionData?.session?.access_token;
-            if (!accessToken) throw new Error("User not authenticated");
-
             // construct payload for player/defense updates
             const payload = {
                 leagueId: selectedLeagueData?.leagueId,
@@ -94,15 +129,10 @@ export default function DashboardPage() {
                 isDefense: false
             };
 
-            const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/UpdateUserLeague/member`,
-                {
-                    method: "DELETE",
-                    headers: {
-                        "Authorization": `Bearer ${accessToken}`,
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify(payload)
-                });
+            const res = await authFetch(`${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/UpdateUserLeague/member`, {
+                method: "DELETE",
+                body: JSON.stringify(payload)
+            })
 
             if (!res.ok) throw new Error();
 
@@ -116,10 +146,6 @@ export default function DashboardPage() {
 
     const onDefenseDelete = async (defense: ILeagueDefense) => {
         try {
-            const { data: sessionData } = await supabase.auth.getSession();
-            const accessToken = sessionData?.session?.access_token;
-            if (!accessToken) throw new Error("User not authenticated");
-
             // construct payload for player/defense updates
             const payload = {
                 leagueId: selectedLeagueData?.leagueId,
@@ -127,13 +153,9 @@ export default function DashboardPage() {
                 isDefense: true
             };
 
-            const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/UpdateUserLeague/member`,
+            const res = await authFetch(`${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/UpdateUserLeague/member`,
                 {
                     method: "DELETE",
-                    headers: {
-                        "Authorization": `Bearer ${accessToken}`,
-                        "Content-Type": "application/json"
-                    },
                     body: JSON.stringify(payload)
                 });
 
@@ -171,6 +193,12 @@ export default function DashboardPage() {
                     {selectedDefense && <DefenseStatsOverlay defense={selectedDefense} onDeleteDefense={onDefenseDelete} />}
                 </Overlay>
             }
+            <ConfirmAdviceModal
+                isOpen={showAdviceModal}
+                onClose={() => setShowAdviceModal(false)}
+                onUseCached={handleUseCached}
+                onRegenerate={handleRegenerate}
+            />
         </AppNavWrapper>
     )
 }
