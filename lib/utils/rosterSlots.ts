@@ -1,4 +1,4 @@
-import { ILeagueData } from "@/app/interfaces/IUserData";
+import { ILeagueData, IPlayerData } from "@/app/interfaces/IUserData";
 
 export const FLEX_ELIGIBLE = ["RB", "WR", "TE"];
 
@@ -140,4 +140,55 @@ export function canDefenseStartAtPosition(league: ILeagueData) {
   const defStartCount = league.defenses.filter((t) => t.picked).length;
 
   return defSlots - defStartCount > 0;
+}
+
+// only for players, not defenses
+export function getPlayersToSwapForNewStarter(
+  league: ILeagueData,
+  position: string
+) {
+  // if position is not flex eligible, only display the other members of that position
+  if (!FLEX_ELIGIBLE.includes(position)) {
+    return league.players.filter(
+      (p) => p.player.position === position && p.picked
+    );
+  }
+
+  // if position is flex eligible, only display ALL starting members in WR, RB, TE if they are more than their slot capacity
+  const rbSlots = getRosterSlotsByPosition(league, "RB");
+  const wrSlots = getRosterSlotsByPosition(league, "WR");
+  const teSlots = getRosterSlotsByPosition(league, "TE");
+
+  const rbStarters = league.players.filter(
+    (p) => p.player.position === "RB" && p.picked
+  );
+  const wrStarters = league.players.filter(
+    (p) => p.player.position === "WR" && p.picked
+  );
+  const teStarters = league.players.filter(
+    (p) => p.player.position === "TE" && p.picked
+  );
+
+  const rbExtra = Math.max(rbStarters.length - rbSlots, 0);
+  const wrExtra = Math.max(wrStarters.length - wrSlots, 0);
+  const teExtra = Math.max(teStarters.length - teSlots, 0);
+
+  const result: IPlayerData[] = [];
+
+  // RB overflow into FLEX
+  if (rbExtra > 0) {
+    result.push(...rbStarters);
+  }
+
+  // WR overflow into FLEX
+  if (wrExtra > 0) {
+    result.push(...wrStarters);
+  }
+
+  // TE overflow into FLEX
+  if (teExtra > 0) {
+    result.push(...teStarters);
+  }
+
+  return result;
 }

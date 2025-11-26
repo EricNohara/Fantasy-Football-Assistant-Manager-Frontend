@@ -16,7 +16,8 @@ import { authFetch } from "@/lib/supabase/authFetch";
 import { getCachedAdvice } from "@/lib/utils/cachedAdvice";
 import ConfirmAdviceModal from "../components/Overlay/ConfirmAdviceModal";
 import ConfirmSwapModal from "../components/Overlay/ConfirmSwapModal";
-import { canDefenseStartAtPosition, canPlayerStartAtPosition } from "@/lib/utils/rosterSlots";
+import { canDefenseStartAtPosition, canPlayerStartAtPosition, getPlayersToSwapForNewStarter } from "@/lib/utils/rosterSlots";
+import SwapSelectionModal from "../components/Overlay/SwapSelectionModal";
 
 const NoDataMessage = styled.p`
     font-style: italic;
@@ -33,6 +34,8 @@ export default function DashboardPage() {
     const [showAdviceModal, setShowAdviceModal] = useState(false);
     const [showSwapModal, setShowSwapModal] = useState(false);
     const [swapTarget, setSwapTarget] = useState<IPlayerData | ILeagueDefense | null>(null);
+    const [swapChoices, setSwapChoices] = useState<(IPlayerData | ILeagueDefense)[]>([]);
+    const [showSwapSelectionModal, setShowSwapSelectionModal] = useState(false);
 
     // Set default selected league on load (first one)
     useEffect(() => {
@@ -173,38 +176,68 @@ export default function DashboardPage() {
     const handleConfirmStartSit = async () => {
         if (!swapTarget || !selectedLeagueData) return;
 
+        const isPlayer = "player" in swapTarget;
+
+        // CASE 1 — User is trying to START someone who is currently SITTING
         if (swapTarget.picked === false) {
-            if ("player" in swapTarget) {
-                alert(canPlayerStartAtPosition(selectedLeagueData, swapTarget.player.position));
+
+            let canStart = true;
+            let choices: (IPlayerData | ILeagueDefense)[] = [];
+
+            if (isPlayer) {
+                canStart = canPlayerStartAtPosition(selectedLeagueData, swapTarget.player.position);
+
+                if (!canStart) {
+                    choices = getPlayersToSwapForNewStarter(
+                        selectedLeagueData,
+                        swapTarget.player.position
+                    );
+                }
+
             } else {
-                alert(canDefenseStartAtPosition(selectedLeagueData));
+                canStart = canDefenseStartAtPosition(selectedLeagueData);
+
+                if (!canStart) {
+                    choices = selectedLeagueData.defenses.filter(d => d.picked);
+                }
+            }
+
+            // If cannot start → show player list overlay instead of swapping
+            if (!canStart) {
+                setSwapChoices(choices);
+                setShowSwapModal(false);
+                setShowSwapSelectionModal(true);
+                return;
             }
         }
 
+        // CASE 2 — Player can start OR the user is switching to SIT
+        await performPickedSwap(swapTarget);
+    };
+
+    const performPickedSwap = async (target: IPlayerData | ILeagueDefense) => {
         try {
             const res = await authFetch(
                 `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/UpdateUserLeague/pickedStatus`,
                 {
                     method: "PUT",
                     body: JSON.stringify({
-                        league_id: selectedLeagueData.leagueId,
-                        member_id: "player" in swapTarget
-                            ? swapTarget.player.id        // player
-                            : swapTarget.team.id,         // defense
-                        picked: !swapTarget.picked,       // flip start/sit
-                        is_defense: !("player" in swapTarget)
+                        league_id: selectedLeagueData!.leagueId,
+                        member_id: "player" in target ? target.player.id : target.team.id,
+                        picked: !target.picked,
+                        is_defense: !("player" in target),
                     }),
                 }
             );
 
-            if (!res.ok) throw new Error("Failed to update picked status");
+            if (!res.ok) throw new Error();
 
-            // update UI after server updates
             await refreshUserData();
             setShowSwapModal(false);
+            setShowSwapSelectionModal(false);
             setSwapTarget(null);
-        } catch (error) {
-            console.error("Error swapping start/sit:", error);
+        } catch (err) {
+            console.error(err);
             alert("Failed to update lineup.");
         }
     };
@@ -245,6 +278,18 @@ export default function DashboardPage() {
                 target={swapTarget}
                 onClose={() => setShowSwapModal(false)}
                 onConfirm={handleConfirmStartSit}
+            />
+            <SwapSelectionModal
+                isOpen={showSwapSelectionModal}
+                onClose={() => setShowSwapSelectionModal(false)}
+                choices={swapChoices}
+                onSelect={async (choice) => {
+                    // First bench the chosen player
+                    await performPickedSwap(choice);
+
+                    // Then start the new target
+                    await performPickedSwap(swapTarget!);
+                }}
             />
         </AppNavWrapper>
     )
