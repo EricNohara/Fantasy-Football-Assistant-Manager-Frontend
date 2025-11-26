@@ -7,12 +7,12 @@ import { useUserData } from "../context/UserDataProvider";
 import { useState, useEffect } from "react";
 import { ILeagueData } from "../interfaces/IUserData";
 import { IPlayerNewsArticle } from "../interfaces/IPlayerNewsArticle";
-import { createClient } from "@/lib/supabase/client";
 import GenericDropdown from "../components/GenericDropdown";
 import LoadingMessage from "../components/LoadingMessage";
 import SearchBar from "../components/SearchBar";
 import styled from "styled-components";
 import Overlay from "../components/Overlay/Overlay";
+import { authFetch } from "@/lib/supabase/authFetch";
 
 const ArticlesList = styled.div`
   display: flex;
@@ -141,7 +141,6 @@ const OverlayTag = styled.span`
 
 export default function ArticlesPage() {
     const router = useRouter();
-    const supabase = createClient();
     const { userData } = useUserData();
     const [selectedLeagueData, setSelectedLeagueData] = useState<ILeagueData | null>(null);
     const [articles, setArticles] = useState<IPlayerNewsArticle[]>([]);
@@ -161,14 +160,7 @@ export default function ArticlesPage() {
         const fetcher = async () => {
             setIsLoading(true);
             try {
-                // get the session
-                const { data: sessionData } = await supabase.auth.getSession();
-                const accessToken = sessionData?.session?.access_token;
-                if (!accessToken) throw new Error("User not authenticated");
-
-                const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/Espn/articles/${selectedLeagueData?.leagueId}`,
-                    { headers: { "Authorization": `Bearer ${accessToken}`, } }
-                )
+                const res = await authFetch(`${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/Espn/articles/${selectedLeagueData?.leagueId}`);
 
                 if (!res.ok) {
                     const errorText = await res.text();
@@ -242,7 +234,6 @@ export default function ArticlesPage() {
                                 a.description?.toLowerCase().includes(searchQuery.toLowerCase())
                             )
                             .map((a) => {
-                                const link = a.links?.web?.href ?? "#";
                                 const img = a.images?.[0]?.url;
                                 const date = a.published
                                     ? new Date(a.published).toLocaleDateString()

@@ -245,7 +245,7 @@ export default function DashboardPage() {
         }
     };
 
-    const handleCreateLeague = async (payload: any) => {
+    const handleCreateLeague = async (payload: unknown) => {
         try {
             const res = await authFetch(
                 `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/UpdateUserLeague/createLeague`,

@@ -162,7 +162,7 @@ export default function PlayerList({
           $selected={selectable && selectedId === playerData.player.id}
           onClick={
             () => {
-              onPlayerClick && onPlayerClick(playerData);
+              onPlayerClick?.(playerData);
               if (selectable) {
                 if (selectedId === playerData.player.id) setSelectedId(null);
                 else setSelectedId(playerData.player.id);
@@ -217,7 +217,7 @@ export default function PlayerList({
             $selected={selectable && selectedId === def.team.id}
             onClick={
               () => {
-                onDefenseClick && onDefenseClick(def);
+                onDefenseClick?.(def);
                 if (selectable) {
                   if (selectedId === def.team.id) setSelectedId(null);
                   else setSelectedId(def.team.id);

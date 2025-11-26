@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { createServiceRoleClient, createClient } from "@/lib/supabase/server";
 
-export async function DELETE(req: NextRequest) {
+export async function DELETE() {
   try {
     // Create a normal client to get the current session
     const supabase = await createClient();
@@ -31,7 +31,7 @@ export async function DELETE(req: NextRequest) {
     }
 
     return NextResponse.json({ message: "User deleted successfully" });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Delete user error:", err);
     return NextResponse.json(
       { error: "Internal server error" },

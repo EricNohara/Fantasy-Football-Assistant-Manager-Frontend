@@ -86,9 +86,22 @@ interface IPerformanceTableProps<T> {
 }
 
 // helper type guards for styling specific cols
-function isPlayerRow(row: any): row is { playerName: string; headshotUrl?: string | null } {
-    return typeof row.playerName === "string";
+function isPlayerRow(
+    row: unknown
+): row is { playerName: string; headshotUrl?: string | null } {
+    if (
+        typeof row !== "object" ||
+        row === null ||
+        !("playerName" in row)
+    ) {
+        return false;
+    }
+
+    const candidate = row as { playerName: unknown };
+
+    return typeof candidate.playerName === "string";
 }
+
 
 function isBoolean(value: unknown): value is boolean {
     return typeof value === "boolean";

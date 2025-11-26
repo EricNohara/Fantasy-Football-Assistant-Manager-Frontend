@@ -10,7 +10,7 @@ import TextInput from "../TextInput";
 interface Props {
     isOpen: boolean;
     onClose: () => void;
-    onCreate: (payload: any) => Promise<void>;
+    onCreate: (payload: unknown) => Promise<void>;
 }
 
 const Wrapper = styled.div`

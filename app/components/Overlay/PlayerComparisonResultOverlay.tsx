@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Overlay from "./Overlay";
 import styled from "styled-components";
 import LoadingMessage from "../LoadingMessage";
-import { PrimaryColorButton } from "../Buttons";
 
 import { IPlayerData, ILeagueDefense } from "@/app/interfaces/IUserData";
 import { authFetch } from "@/lib/supabase/authFetch";
@@ -113,11 +112,11 @@ export default function PlayerComparisonResultOverlay({
     const [recommendations, setRecommendations] = useState<AIRecommendation[] | null>(null);
     const [error, setError] = useState<string | null>(null);
 
-    const isDefenseType = (x: any): x is ILeagueDefense =>
-        x && typeof x === "object" && "team" in x;
+    const isDefenseType = (x: unknown): x is ILeagueDefense =>
+        typeof x === "object" && x !== null && "team" in x;
 
-    const isPlayerType = (x: any): x is IPlayerData =>
-        x && typeof x === "object" && "player" in x;
+    const isPlayerType = (x: unknown): x is IPlayerData =>
+        typeof x === "object" && x !== null && "player" in x;
 
     // Safe defaults before data exists
     const targetId =
@@ -164,8 +163,8 @@ export default function PlayerComparisonResultOverlay({
                 console.log(json.recommendations);
 
                 setRecommendations(json.recommendations ?? []);
-            } catch (err: any) {
-                setError(err.message ?? "Failed to load comparison");
+            } catch (err: unknown) {
+                setError(err instanceof Error ? err.message : "Failed to load comparison");
             } finally {
                 setLoading(false);
             }

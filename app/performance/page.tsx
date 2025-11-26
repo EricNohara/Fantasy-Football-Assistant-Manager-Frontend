@@ -2,14 +2,14 @@
 
 import AppNavWrapper from "../components/AppNavWrapper";
 import { useUserData } from "../context/UserDataProvider";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import GenericDropdown from "../components/GenericDropdown";
-import { createClient } from "@/lib/supabase/client";
 import { ILeagueData } from "../interfaces/IUserData";
 import { IPerformanceResponse, IWeeklyPerformance, IWeeklyPlayerPerformance } from "../interfaces/IPerformanceResponse";
 import { PerformanceTable } from "../components/PerformanceTable";
 import LoadingMessage from "../components/LoadingMessage";
 import styled from "styled-components";
+import { authFetch } from "@/lib/supabase/authFetch";
 
 const TablesContainer = styled.div`
   display: flex;
@@ -27,20 +27,28 @@ const TablePane = styled.div`
 
 export default function PerformancePage() {
     const { userData } = useUserData();
-    const supabase = createClient();
     const [selectedLeagueData, setSelectedLeagueData] = useState<ILeagueData | null>(null);
     const [selectedWeek, setSelectedWeek] = useState<number | null>(null);
     const [performance, setPerformance] = useState<IPerformanceResponse | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
 
-    const players = selectedLeagueData?.players ?? [];
+    const players = useMemo(
+        () => selectedLeagueData?.players ?? [],
+        [selectedLeagueData]
+    );
     const hasPlayers = players.length > 0;
 
-    const availableWeeks = hasPlayers
-        ? Array.from(
-            new Set(players.flatMap((p) => p.weeklyStats?.map((ws) => ws.week) ?? []))
-        ).sort((a, b) => a - b)
-        : [];
+    const availableWeeks = useMemo(() => {
+        if (!hasPlayers) return [];
+
+        return Array.from(
+            new Set(
+                players.flatMap((p) => p.weeklyStats?.map((ws) => ws.week) ?? [])
+            )
+        ).sort((a, b) => a - b);
+
+    }, [hasPlayers, players]);
+
 
     useEffect(() => {
         if (userData?.leagues && userData.leagues.length > 0) {
@@ -54,7 +62,7 @@ export default function PerformancePage() {
         } else {
             setSelectedWeek(null);
         }
-    }, [selectedLeagueData]);
+    }, [selectedLeagueData, availableWeeks]);
 
     useEffect(() => {
         if (!selectedLeagueData || selectedWeek === null) return;
@@ -62,14 +70,8 @@ export default function PerformancePage() {
         const fetcher = async () => {
             setIsLoading(true);
             try {
-                const { data: sessionData } = await supabase.auth.getSession();
-                const accessToken = sessionData?.session?.access_token;
-                if (!accessToken) throw new Error("User not authenticated");
-
-                const res = await fetch(
-                    `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/LeaguePerformance/${selectedLeagueData.leagueId}/week/${selectedWeek}`,
-                    { headers: { Authorization: `Bearer ${accessToken}` } }
-                );
+                const res = await authFetch(
+                    `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/LeaguePerformance/${selectedLeagueData.leagueId}/week/${selectedWeek}`);
 
                 if (!res.ok) {
                     setPerformance(null);

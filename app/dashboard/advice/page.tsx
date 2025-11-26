@@ -86,7 +86,7 @@ export default function DashboardPage() {
         };
 
         generateAdvice();
-    }, [leagueId, userData, regenerate]);
+    }, [leagueId, userData, regenerate, league]);
 
     // Step 1: Collect picked playerIds
     const pickedPlayerIds = new Set(advice.filter(a => a.picked).map(a => a.playerId));

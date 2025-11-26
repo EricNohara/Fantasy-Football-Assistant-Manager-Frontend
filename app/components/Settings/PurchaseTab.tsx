@@ -6,6 +6,7 @@ import { headerFont } from "@/app/localFont";
 import { PrimaryColorButton } from "@/app/components/Buttons";
 import CheckoutWrapper from "../Payment/CheckOutWrapper";
 import { Check } from "lucide-react";
+import Image from "next/image";
 
 const PurchaseContainer = styled.div`
   padding: 4rem;
@@ -234,7 +235,13 @@ export default function PurchaseTab({ onSelectPackage }: IPurchaseTabProps) {
             <PackageName className={headerFont.className}>{pkg.name}</PackageName>
 
             <TokenIcon>
-              <img src="images/token-icon.png" alt="Token Icon" />
+              <Image
+                src="/images/token-icon.png"
+                alt="Token Icon"
+                width={80}
+                height={80}
+                style={{ objectFit: "contain" }}
+              />
             </TokenIcon>
 
             <TokenAmount className={headerFont.className}>

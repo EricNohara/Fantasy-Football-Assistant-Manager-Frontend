@@ -44,8 +44,8 @@ export function usePlayersByPosition<T extends string>(position: T) {
       const data = await res.json();
 
       setPlayers(data as PlayerResponse<T>);
-    } catch (err: any) {
-      setError(err.message ?? "Unknown error");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Unknown error");
       setPlayers(null);
     } finally {
       setIsLoading(false);

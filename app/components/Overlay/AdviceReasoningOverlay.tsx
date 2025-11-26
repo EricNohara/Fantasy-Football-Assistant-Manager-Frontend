@@ -97,13 +97,19 @@ export default function AdviceReasoningOverlay({
     defenseData,
     leagueId
 }: AdviceReasoningOverlayProps) {
-    if (!advice) return null;
-
     const [showCompareOverlay, setShowCompareOverlay] = useState(false);
     const [showCompareResult, setShowCompareResult] = useState(false);
     const [compareWith, setCompareWith] = useState<IPlayerData | ILeagueDefense | null>(null);
 
     const isDefense = advice.position === "DEF";
+
+    if (!advice) {
+        return (
+            <Overlay isOpen={isOpen} onClose={onClose}>
+                <Wrapper />
+            </Overlay>
+        );
+    }
 
     return (
         <>

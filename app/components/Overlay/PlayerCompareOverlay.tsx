@@ -121,11 +121,6 @@ export default function PlayerCompareOverlay({
 
     const list = position === "DEF" ? filteredDefenses : filteredPlayers;
 
-    const isPlayerType = (x: IPlayerData | ILeagueDefense | null): x is IPlayerData =>
-        x !== null && "player" in x;
-    const isDefenseType = (x: IPlayerData | ILeagueDefense | null): x is ILeagueDefense =>
-        x !== null && "team" in x;
-
     return (
         <Overlay isOpen={isOpen} onClose={onClose}>
             {isOpen && (

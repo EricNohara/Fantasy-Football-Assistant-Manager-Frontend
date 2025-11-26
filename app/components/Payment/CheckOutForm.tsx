@@ -1,14 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
-  PaymentElement,
   useStripe,
   useElements,
-  Elements,
   CardElement
 } from '@stripe/react-stripe-js'
-import { loadStripe } from '@stripe/stripe-js'
 import styled from 'styled-components';
 import { headerFont } from "@/app/localFont";
 import { PrimaryColorButton } from "@/app/components/Buttons";
@@ -16,8 +13,6 @@ import { authFetch } from "@/lib/supabase/authFetch";
 
 // Make sure to call loadStripe outside of a component's render to avoid
 // recreating the Stripe object on every render.
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
-
 const CheckoutContainer = styled.div`
   display: flex;
   flex-direction: column;
@@ -203,6 +198,7 @@ export default function CheckoutForm({ packageData, onBack }: CheckoutFormProps)
     } catch (error) {
       setMessage('An unexpected error occurred. Please try again.');
       setIsError(true);
+      console.error(error);
     }
     //Once the payment has completed (successfully or not), set the loading state to false.
     setLoading(false);

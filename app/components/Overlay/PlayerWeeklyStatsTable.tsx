@@ -1,4 +1,4 @@
-import { IPlayerStats, IPlayerStatsWithWeek } from "../../interfaces/IUserData";
+import { IPlayerStatsWithWeek } from "../../interfaces/IUserData";
 import styled from "styled-components";
 
 const ScrollWrapper = styled.div`

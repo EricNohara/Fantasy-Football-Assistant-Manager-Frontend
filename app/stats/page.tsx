@@ -102,12 +102,6 @@ export default function StatsPage() {
     refresh();
   }, [selectedPosition, refresh]);
 
-  const handleLeagueChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const leagueId = e.target.value;
-    const league = userData?.leagues.find((l) => l.leagueId === leagueId) ?? null;
-    setSelectedLeagueData(league);
-  };
-
   const leagueDropdown = (
     <GenericDropdown
       items={userData?.leagues ?? []}

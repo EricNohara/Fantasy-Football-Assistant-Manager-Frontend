@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "../context/AuthProvider";
 import { PrimaryColorButton, PrimaryColorOutlinedButton } from "../components/Buttons";
 import styled from "styled-components";
 import { titleFont, headerFont } from "../localFont";
@@ -140,7 +139,6 @@ export default function SignUpPage() {
   useRedirectIfLoggedIn();
   // create browser client
   const router = useRouter();
-  const { setIsLoggedIn } = useAuth();
 
   const [fullname, setFullname] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");

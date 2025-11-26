@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import LoadingSpinner from "./LoadingSpinner";
 import styled, { keyframes } from "styled-components";
 
@@ -34,24 +34,21 @@ export default function LoadingMessage({
     messages,
     intervalMs = 2000,
 }: LoadingMessageProps) {
-    // If single message mode no state, no cycles
     const singleMessage = message ?? (messages?.length ? null : "Loading...");
 
-    const activeMessages = singleMessage
-        ? [singleMessage]          // force single mode
-        : messages ?? ["Loading..."]; // default
+    const activeMessages = useMemo(() => {
+        return singleMessage
+            ? [singleMessage]
+            : messages ?? ["Loading..."];
+    }, [singleMessage, messages]);
 
     const [index, setIndex] = useState(0);
     const timerRef = useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
-        // If only one message do not cycle
         if (activeMessages.length <= 1) return;
-
-        // Stop cycling on last message
         if (index === activeMessages.length - 1) return;
 
-        // random extra delay (0–2 seconds)
         const randomDelay = Math.floor(Math.random() * 2000);
         const delay = intervalMs + randomDelay;
 

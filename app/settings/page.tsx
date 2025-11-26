@@ -68,7 +68,7 @@ export default function SettingsPage() {
                 setScoringSettings(userData.leagues[0].scoringSettings);
             }
         }
-    }, [userData]);
+    }, [userData, isLoading]);
 
     const handleSaveChanges = async () => {
         try {
@@ -145,8 +145,8 @@ export default function SettingsPage() {
 
             alert("Settings saved successfully!");
             await refreshUserData();
-        } catch (error: any) {
-            alert(`Error saving settings: ${error.message || error}`);
+        } catch (error) {
+            alert(`Error saving settings: ${error}`);
         }
     };
 
@@ -168,8 +168,8 @@ export default function SettingsPage() {
             await supabase.auth.signOut();
             setIsLoggedIn(false);
             router.push("/");
-        } catch (error: any) {
-            alert(`Error: ${error.message}`);
+        } catch (error) {
+            alert(`Error: ${error}`);
         }
     };
 
