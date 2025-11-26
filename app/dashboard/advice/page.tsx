@@ -11,78 +11,14 @@ import PlayerList from "@/app/components/PlayerList";
 import { ILeagueDefense, IPlayerData } from "@/app/interfaces/IUserData";
 import { getCachedAdvice, setCachedAdvice } from "@/lib/utils/cachedAdvice";
 import styled from "styled-components";
-import Overlay from "@/app/components/Overlay/Overlay";
-import { PlayerPositionTag } from "@/app/components/PlayerList";
-import { formatGameInfo, formatTeamGameInfo } from "@/lib/utils/formatGameInfo";
 import { authFetch } from "@/lib/supabase/authFetch";
+import AdviceReasoningOverlay from "@/app/components/Overlay/AdviceReasoningOverlay";
 
 const StartSitLabel = styled.h2`
     font-size: 1.5rem;
     font-weight: bold;
     color: white;
     margin: 0.5rem 0;
-`;
-
-const OverlayContentWrapper = styled.div`
-  display: flex;
-  flex-direction: column;
-  background-color: var(--color-base-dark-3);
-  border-radius: var(--global-border-radius);
-  color: white;
-`;
-
-const OverlayHeader = styled.div`
-    position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  background-color: var(--color-base-dark-4);
-  padding: 1rem;
-  padding-bottom: 0;
-  border-radius: var(--global-border-radius) var(--global-border-radius) 0 0;
-  gap: 2rem;
-`;
-
-const PlayerImage = styled.img`
-  height: 250px;
-  object-fit: cover;
-`;
-
-const NameStack = styled.div`
-  display: flex;
-  flex-direction: column;
-
-  h1 {
-    margin: 0;
-    font-size: 1.5rem;
-    font-weight: bold;
-  }
-
-  h2 {
-    margin: 0;
-    font-size: 1rem;
-    color: var(--color-txt-3);
-  }
-`;
-
-const OverlayBody = styled.div`
-    padding: 2rem;
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-
-  h3 {
-    font-size: 1.15rem;
-    font-weight: bold;
-    margin-bottom: 1rem;
-  }
-`;
-
-const PositionTagWrapper = styled.div`
-  position: absolute;
-  top: 1rem;
-  left: 1rem;
 `;
 
 export default function DashboardPage() {
@@ -260,73 +196,14 @@ export default function DashboardPage() {
             {!loading && advice.length === 0 && <p>No advice available yet.</p>}
 
             {/* Overlay */}
-            {showOverlay && selectedPlayer && (
-                <Overlay isOpen={showOverlay} onClose={() => setShowOverlay(false)}>
-                    <OverlayContentWrapper>
-                        <OverlayHeader>
-                            <PlayerImage
-                                src={
-                                    selectedPlayer.position !== "DEF"
-                                        ? selectedPlayerData?.player.headshot_url ?? "default-player.png"
-                                        : selectedDefenseData?.team.logo_url ?? "default-defense.png"
-                                }
-                                alt={
-                                    selectedPlayer.position !== "DEF"
-                                        ? selectedPlayerData?.player.name
-                                        : selectedDefenseData?.team.name
-                                }
-                            />
-                            <NameStack>
-                                <h1>
-                                    {selectedPlayer.position !== "DEF"
-                                        ? selectedPlayerData?.player.name
-                                        : selectedDefenseData?.team.name}
-                                </h1>
-                                {selectedPlayer.position !== "DEF" && (
-                                    <>
-                                        <h2>{`${selectedPlayerData?.player.team_id} ${formatGameInfo(selectedPlayerData?.game, selectedPlayerData?.player)}`}</h2>
-                                        <h2>{selectedPlayerData?.player.status_description}</h2>
-                                        {selectedPlayerData?.game && <>
-                                            <h2>{selectedPlayerData?.game.stadium_name}</h2>
-                                            <h2>{selectedPlayerData?.game.stadium_style}</h2>
-                                        </>}
-                                    </>
-                                )}
-
-                                {selectedPlayer.position === "DEF" && (
-                                    <>
-                                        <h2>{`${selectedDefenseData?.team.id} ${formatTeamGameInfo(selectedPlayerData?.game, selectedDefenseData ?? undefined)}`}</h2>
-                                        {selectedDefenseData?.game && <>
-                                            <h2>{selectedDefenseData?.game.stadium_name}</h2>
-                                            <h2>{selectedDefenseData?.game.stadium_style}</h2>
-                                        </>}
-                                    </>
-                                )}
-                            </NameStack>
-                            <PositionTagWrapper>
-                                <PlayerPositionTag position={selectedPlayer.position}>
-                                    {selectedPlayer.position}
-                                </PlayerPositionTag>
-                            </PositionTagWrapper>
-                        </OverlayHeader>
-
-                        <OverlayBody>
-                            <div>
-                                <h3>Status:</h3>
-                                <p style={{ fontWeight: "bold", color: selectedPlayer.picked ? "var(--color-green)" : "var(--color-red)" }}>
-                                    {selectedPlayer.picked ? "Start" : "Sit"}
-                                </p>
-                            </div>
-                            <div>
-                                <h3>Reasoning: </h3>
-                                <p style={{ color: "var(--color-txt-2)" }}>
-                                    {selectedPlayer.reasoning}
-                                </p>
-                            </div>
-                        </OverlayBody>
-                    </OverlayContentWrapper>
-                </Overlay>
-            )}
+            <AdviceReasoningOverlay
+                isOpen={showOverlay}
+                onClose={() => setShowOverlay(false)}
+                advice={selectedPlayer!}
+                playerData={selectedPlayerData}
+                defenseData={selectedDefenseData}
+                leagueId={leagueId ?? ""}
+            />
         </AppNavWrapper >
     );
 }
